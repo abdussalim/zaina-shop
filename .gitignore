@@ -1,0 +1,13 @@
+.worktrees/
+node_modules/
+dist/
+coverage/
+.env
+.env.*
+!.env.example
+backups/
+*.log
+*.dump
+*.sql.gz
+.DS_Store
+Thumbs.db
