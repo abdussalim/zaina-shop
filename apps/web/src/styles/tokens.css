@@ -1,0 +1,41 @@
+:root {
+  --canvas: #f4f0e7;
+  --paper: #fffdf8;
+  --paper-strong: #ffffff;
+  --ink: #272821;
+  --ink-soft: #66675e;
+  --line: #dcd6c8;
+  --line-strong: #c8c0af;
+  --olive: #626a45;
+  --olive-dark: #454d30;
+  --olive-pale: #e6ead9;
+  --terracotta: #b85f43;
+  --terracotta-dark: #8f422d;
+  --terracotta-pale: #f6e2da;
+  --porcelain: #607d80;
+  --porcelain-pale: #e0eaeb;
+  --brass: #aa8246;
+  --success: #3f7353;
+  --danger: #a44338;
+  --warning: #986c2b;
+
+  --font-body: 'Instrument Sans Variable', 'Segoe UI', sans-serif;
+  --font-data: 'JetBrains Mono Variable', Consolas, monospace;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  --radius-sm: 0.4rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1.1rem;
+  --shadow-float: 0 18px 45px rgb(55 46 34 / 0.12);
+  --shadow-soft: 0 8px 24px rgb(55 46 34 / 0.07);
+  color-scheme: light;
+}
