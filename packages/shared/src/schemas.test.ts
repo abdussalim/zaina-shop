@@ -90,4 +90,27 @@ describe('saleInputSchema', () => {
 
     expect(result.success).toBe(false)
   })
+
+  it('rejects duplicate products in one cart', () => {
+    const productId = '55f49c79-6612-4c23-bdf4-5933dbda7794'
+    const result = saleInputSchema.safeParse({
+      idempotencyKey: '5a5ab2a3-67e4-4533-88be-9789209b0376',
+      discount: 0,
+      amountPaid: 20_000,
+      items: [
+        {
+          productId,
+          unitId: 'bca82d90-f8e6-4251-99eb-e21609916b02',
+          quantity: 1,
+        },
+        {
+          productId,
+          unitId: 'd193a14e-3bca-4054-a4af-8349479a931c',
+          quantity: 1,
+        },
+      ],
+    })
+
+    expect(result.success).toBe(false)
+  })
 })

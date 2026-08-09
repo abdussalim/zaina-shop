@@ -111,13 +111,24 @@ export const saleItemInputSchema = z.object({
   quantity: quantitySchema,
 })
 
-export const saleInputSchema = z.object({
-  idempotencyKey: z.uuid(),
-  discount: moneySchema.default(0),
-  amountPaid: moneySchema,
-  note: optionalText(500),
-  items: z.array(saleItemInputSchema).min(1).max(100),
-})
+export const saleInputSchema = z
+  .object({
+    idempotencyKey: z.uuid(),
+    discount: moneySchema.default(0),
+    amountPaid: moneySchema,
+    note: optionalText(500),
+    items: z.array(saleItemInputSchema).min(1).max(100),
+  })
+  .superRefine((sale, context) => {
+    const productIds = sale.items.map((item) => item.productId)
+    if (new Set(productIds).size !== productIds.length) {
+      context.addIssue({
+        code: 'custom',
+        path: ['items'],
+        message: 'Satu barang hanya boleh muncul satu kali dalam keranjang',
+      })
+    }
+  })
 
 export const loginInputSchema = z.object({
   username: z.string().trim().min(1).max(80),
