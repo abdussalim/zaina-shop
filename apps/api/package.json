@@ -1,0 +1,42 @@
+{
+  "name": "@zaina/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node scripts/copy-assets.mjs",
+    "dev": "tsx watch src/server.ts",
+    "start": "node dist/server.js",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "db:migrate": "tsx src/db/migrate-cli.ts",
+    "db:seed": "tsx src/db/seed-cli.ts"
+  },
+  "dependencies": {
+    "@zaina/shared": "0.1.0",
+    "argon2": "latest",
+    "connect-pg-simple": "latest",
+    "express": "5.2.1",
+    "express-rate-limit": "latest",
+    "express-session": "latest",
+    "helmet": "latest",
+    "pg": "8.23.0",
+    "pino": "latest",
+    "pino-http": "latest",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.4",
+    "@types/connect-pg-simple": "latest",
+    "@types/express": "latest",
+    "@types/express-session": "latest",
+    "@types/node": "latest",
+    "@types/pg": "latest",
+    "@types/supertest": "latest",
+    "supertest": "latest",
+    "tsx": "latest",
+    "typescript": "7.0.2",
+    "vitest": "4.1.10"
+  }
+}

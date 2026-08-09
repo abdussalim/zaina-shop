@@ -1,0 +1,10 @@
+DROP TABLE IF EXISTS session;
+DROP TABLE IF EXISTS store_settings;
+DROP TABLE IF EXISTS stock_movements;
+DROP TABLE IF EXISTS sale_items;
+DROP TABLE IF EXISTS sales;
+DROP TABLE IF EXISTS inventory_balances;
+DROP TABLE IF EXISTS product_units;
+DROP TABLE IF EXISTS products;
+DROP TABLE IF EXISTS categories;
+DROP TABLE IF EXISTS users;
