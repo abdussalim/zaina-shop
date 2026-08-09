@@ -85,6 +85,7 @@ export const movementTypeSchema = z.enum([
 
 export const stockMovementInputSchema = z
   .object({
+    idempotencyKey: z.uuid(),
     type: movementTypeSchema,
     productId: z.uuid(),
     unitId: z.uuid(),

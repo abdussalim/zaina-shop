@@ -55,11 +55,24 @@ describe('productInputSchema', () => {
 describe('stockMovementInputSchema', () => {
   it('requires a reason when recording damaged goods', () => {
     const result = stockMovementInputSchema.safeParse({
+      idempotencyKey: 'e57d2f17-6887-4d6d-b60a-4a637f3f6bd5',
       type: 'DAMAGE',
       productId: 'dc53715f-0f46-49e4-9fa7-9cbcf74eab35',
       unitId: '3eae813d-4ab1-454b-aa01-81463ed07617',
       quantity: 2,
       note: ' ',
+    })
+
+    expect(result.success).toBe(false)
+  })
+
+  it('requires a UUID idempotency key for safe retries', () => {
+    const result = stockMovementInputSchema.safeParse({
+      idempotencyKey: 'bukan-uuid',
+      type: 'RECEIPT',
+      productId: 'dc53715f-0f46-49e4-9fa7-9cbcf74eab35',
+      unitId: '3eae813d-4ab1-454b-aa01-81463ed07617',
+      quantity: 1,
     })
 
     expect(result.success).toBe(false)

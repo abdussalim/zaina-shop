@@ -235,9 +235,9 @@ async function seedDemoInventory(
 
     await database.query(
       `INSERT INTO stock_movements (
-         id, product_id, unit_id, movement_type, quantity_input,
-         factor_snapshot, quantity_base, unit_cost, note, created_by
-       ) VALUES ($1, $2, $3, 'OPENING', $4, $5, $6, $7, $8, $9)
+         id, idempotency_key, product_id, unit_id, movement_type, quantity_input,
+         factor_snapshot, quantity_base, balance_after, unit_cost, note, created_by
+       ) VALUES ($1, $1, $2, $3, 'OPENING', $4, $5, $6, $6, $7, $8, $9)
        ON CONFLICT (id) DO NOTHING`,
       [
         `40000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`,

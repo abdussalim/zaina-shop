@@ -14,6 +14,8 @@ import { createAuthRouter } from './modules/auth/auth.routes.js'
 import { createAuthService } from './modules/auth/auth.service.js'
 import { createCatalogRouter } from './modules/catalog/catalog.routes.js'
 import { createCatalogService } from './modules/catalog/catalog.service.js'
+import { createInventoryRouter } from './modules/inventory/inventory.routes.js'
+import { createInventoryService } from './modules/inventory/inventory.service.js'
 
 export interface AppDependencies {
   config: AppConfig
@@ -51,12 +53,14 @@ export function createApp(dependencies: AppDependencies): Express {
 
   const authService = createAuthService(database)
   const catalogService = createCatalogService(database)
+  const inventoryService = createInventoryService(database)
   app.get('/api/v1/health', async (_request, response) => {
     await database.query('SELECT 1')
     return sendData(response, { status: 'ok' })
   })
   app.use('/api/v1/auth', createAuthRouter(authService))
   app.use('/api/v1', createCatalogRouter(catalogService))
+  app.use('/api/v1', createInventoryRouter(inventoryService))
 
   app.use((_request, _response, next) => {
     next(new AppError(404, 'NOT_FOUND', 'Alamat API tidak ditemukan'))

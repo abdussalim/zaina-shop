@@ -141,12 +141,14 @@ CREATE INDEX idx_sale_items_product ON sale_items (product_id);
 
 CREATE TABLE stock_movements (
   id UUID PRIMARY KEY,
+  idempotency_key UUID NOT NULL UNIQUE,
   product_id UUID NOT NULL,
   unit_id UUID NOT NULL,
   movement_type VARCHAR(30) NOT NULL,
   quantity_input NUMERIC(18,3) NOT NULL,
   factor_snapshot NUMERIC(18,3) NOT NULL,
   quantity_base NUMERIC(18,3) NOT NULL,
+  balance_after NUMERIC(18,3) NOT NULL,
   unit_cost BIGINT,
   supplier_name VARCHAR(160),
   reference_id UUID,
@@ -161,7 +163,7 @@ CREATE TABLE stock_movements (
     'OPENING', 'RECEIPT', 'SALE', 'SALE_REVERSAL', 'DAMAGE',
     'ADJUSTMENT_IN', 'ADJUSTMENT_OUT', 'RETURN_IN', 'RETURN_OUT'
   )),
-  CONSTRAINT ck_stock_movements_quantity CHECK (quantity_input > 0 AND factor_snapshot > 0 AND quantity_base <> 0),
+  CONSTRAINT ck_stock_movements_quantity CHECK (quantity_input > 0 AND factor_snapshot > 0 AND quantity_base <> 0 AND balance_after >= 0),
   CONSTRAINT ck_stock_movements_unit_cost CHECK (unit_cost IS NULL OR unit_cost >= 0)
 );
 
