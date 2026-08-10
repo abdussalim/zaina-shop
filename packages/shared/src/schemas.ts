@@ -53,6 +53,17 @@ export const productInputSchema = z
       })
     }
 
+    if (
+      matchingBaseUnits.length === 1 &&
+      matchingBaseUnits[0]!.salePrice !== product.salePrice
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['units'],
+        message: 'Harga satuan dasar harus sama dengan harga jual dasar',
+      })
+    }
+
     if (product.units.filter((unit) => unit.isDefault).length !== 1) {
       context.addIssue({
         code: 'custom',

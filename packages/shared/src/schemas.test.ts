@@ -51,6 +51,17 @@ describe('productInputSchema', () => {
 
     expect(result.success).toBe(false)
   })
+
+  it('keeps the base-unit selling price aligned with the product price', () => {
+    const result = productInputSchema.safeParse({
+      ...validProduct,
+      units: validProduct.units.map((unit) =>
+        unit.factor === 1 ? { ...unit, salePrice: 9_000 } : unit,
+      ),
+    })
+
+    expect(result.success).toBe(false)
+  })
 })
 
 describe('storeSettingsInputSchema', () => {

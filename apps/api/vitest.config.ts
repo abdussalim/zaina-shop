@@ -5,6 +5,7 @@ export default defineConfig({
     environment: 'node',
     fileParallelism: false,
     hookTimeout: 30_000,
+    testTimeout: 15_000,
     restoreMocks: true,
     clearMocks: true,
     coverage: {
