@@ -2,7 +2,10 @@ import argon2 from 'argon2'
 
 import type { Database } from '../../db/database.js'
 import { AppError } from '../../http/errors.js'
-import { findActiveUserByUsername } from './auth.repository.js'
+import {
+  findActiveUserByUsername,
+  findActiveUserPasswordChangedAt,
+} from './auth.repository.js'
 
 export interface PublicUser {
   id: string
@@ -11,7 +14,11 @@ export interface PublicUser {
 }
 
 export interface AuthService {
-  authenticate(username: string, password: string): Promise<PublicUser>
+  authenticate(
+    username: string,
+    password: string,
+  ): Promise<{ user: PublicUser; passwordChangedAt: string }>
+  isSessionCurrent(userId: string, passwordChangedAt: string): Promise<boolean>
 }
 
 export function createAuthService(database: Database): AuthService {
@@ -31,10 +38,20 @@ export function createAuthService(database: Database): AuthService {
       }
 
       return {
-        id: user.id,
-        username: user.username,
-        displayName: user.display_name,
+        user: {
+          id: user.id,
+          username: user.username,
+          displayName: user.display_name,
+        },
+        passwordChangedAt: new Date(user.password_changed_at).toISOString(),
       }
+    },
+    async isSessionCurrent(userId: string, passwordChangedAt: string) {
+      const current = await findActiveUserPasswordChangedAt(database, userId)
+      return (
+        current !== undefined &&
+        new Date(current).getTime() === new Date(passwordChangedAt).getTime()
+      )
     },
   }
 }

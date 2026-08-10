@@ -1,5 +1,7 @@
 import type { ApiErrorEnvelope, ApiSuccess } from '@zaina/shared'
 
+export const SESSION_EXPIRED_EVENT = 'zaina:session-expired'
+
 export class ApiClientError extends Error {
   constructor(
     public readonly status: number,
@@ -30,13 +32,21 @@ export async function apiRequest<T>(
     const payload = (await response.json().catch(() => undefined)) as
       | ApiErrorEnvelope
       | undefined
-    throw new ApiClientError(
+    const error = new ApiClientError(
       response.status,
       payload?.error.code ?? 'REQUEST_FAILED',
       payload?.error.message ?? 'Permintaan tidak dapat diproses',
       payload?.error.fields,
       payload?.error.requestId,
     )
+    if (
+      response.status === 401 &&
+      path !== '/api/v1/auth/login' &&
+      typeof window !== 'undefined'
+    ) {
+      window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT))
+    }
+    throw error
   }
   if (response.status === 204) return undefined as T
   const payload = (await response.json()) as ApiSuccess<T>

@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto'
+
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 import { createAuthenticatedTestContext, testConfig } from '../../test/app-context.js'
@@ -136,5 +138,99 @@ describe('catalog routes', () => {
     expect(response.body.data.units.map((unit: { name: string }) => unit.name)).toEqual([
       'buah',
     ])
+  })
+
+  it('rejects unit identifiers owned by another product without changing the catalog', async () => {
+    const first = await createProduct('UNIT-201')
+    const second = await createProduct('UNIT-202')
+    const update = productInput('UNIT-201')
+    update.units[0]!.id = second.body.data.units[0].id
+    update.units[1]!.id = first.body.data.units[1].id
+
+    const response = await context.agent
+      .patch(`/api/v1/products/${first.body.data.id}`)
+      .set('Origin', testConfig.appOrigin)
+      .send(update)
+
+    expect(response.status).toBe(422)
+    expect(response.body.error.code).toBe('INVALID_PRODUCT_UNIT')
+    const unchanged = await context.agent.get(`/api/v1/products/${first.body.data.id}`)
+    expect(unchanged.body.data.units).toHaveLength(2)
+  })
+
+  it('rejects duplicate unit identifiers before mutating a product', async () => {
+    const created = await createProduct('UNIT-203')
+    const update = productInput('UNIT-203')
+    const repeatedId = created.body.data.units[0].id
+    update.units[0]!.id = repeatedId
+    update.units[1]!.id = repeatedId
+
+    const response = await context.agent
+      .patch(`/api/v1/products/${created.body.data.id}`)
+      .set('Origin', testConfig.appOrigin)
+      .send(update)
+
+    expect(response.status).toBe(422)
+    const unchanged = await context.agent.get(`/api/v1/products/${created.body.data.id}`)
+    expect(unchanged.body.data.units).toHaveLength(2)
+  })
+
+  it('refuses to archive a product while physical stock remains', async () => {
+    const created = await createProduct('ARC-201')
+    const baseUnit = created.body.data.units.find(
+      (unit: { name: string }) => unit.name === 'buah',
+    )
+    await context.agent
+      .post('/api/v1/inventory/movements')
+      .set('Origin', testConfig.appOrigin)
+      .send({
+        idempotencyKey: randomUUID(),
+        type: 'RECEIPT',
+        productId: created.body.data.id,
+        unitId: baseUnit.id,
+        quantity: 1,
+      })
+
+    const response = await context.agent
+      .post(`/api/v1/products/${created.body.data.id}/archive`)
+      .set('Origin', testConfig.appOrigin)
+
+    expect(response.status).toBe(409)
+    expect(response.body.error.code).toBe('PRODUCT_HAS_STOCK')
+    const product = await context.agent.get(`/api/v1/products/${created.body.data.id}`)
+    expect(product.body.data).toMatchObject({ isActive: true, balanceBase: 1 })
+  })
+
+  it('does not silently truncate a catalog larger than 250 products', async () => {
+    await context.database.query(
+      `INSERT INTO products (
+         id, category_id, sku, name, base_unit, cost_price, sale_price, minimum_stock
+       )
+       SELECT ('50000000-0000-4000-8000-' || LPAD(number::text, 12, '0'))::uuid,
+              $1, 'BULK-' || LPAD(number::text, 3, '0'),
+              'Produk Massal ' || LPAD(number::text, 3, '0'),
+              'buah', 1000, 2000, 1
+       FROM generate_series(1, 251) AS number`,
+      [categoryId],
+    )
+    await context.database.query(
+      `INSERT INTO product_units (
+         id, product_id, name, factor, sale_price, is_default
+       )
+       SELECT ('60000000-0000-4000-8000-' || LPAD(number::text, 12, '0'))::uuid,
+              ('50000000-0000-4000-8000-' || LPAD(number::text, 12, '0'))::uuid,
+              'buah', 1, 2000, TRUE
+       FROM generate_series(1, 251) AS number`,
+    )
+    await context.database.query(
+      `INSERT INTO inventory_balances (product_id, quantity_base)
+       SELECT ('50000000-0000-4000-8000-' || LPAD(number::text, 12, '0'))::uuid, 1
+       FROM generate_series(1, 251) AS number`,
+    )
+
+    const response = await context.agent.get('/api/v1/products?q=Produk%20Massal')
+
+    expect(response.status).toBe(200)
+    expect(response.body.data).toHaveLength(251)
   })
 })

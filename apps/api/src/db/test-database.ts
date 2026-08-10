@@ -1,6 +1,6 @@
 import { PGlite } from '@electric-sql/pglite'
 
-import type { Database, DatabaseClient } from './database.js'
+import type { Database, DatabaseClient, TransactionOptions } from './database.js'
 
 type PGliteConnection = Pick<PGlite, 'exec' | 'query'>
 
@@ -26,10 +26,19 @@ export async function createTestDatabase(): Promise<Database> {
 
   return {
     ...client,
-    async transaction<T>(work: (transaction: DatabaseClient) => Promise<T>) {
-      return pglite.transaction(async (transaction) =>
-        work(createClient(transaction)),
-      )
+    async transaction<T>(
+      work: (transaction: DatabaseClient) => Promise<T>,
+      options: TransactionOptions = {},
+    ) {
+      return pglite.transaction(async (transaction) => {
+        const client = createClient(transaction)
+        if (options.isolationLevel) {
+          await client.exec(
+            `SET TRANSACTION ISOLATION LEVEL ${options.isolationLevel}`,
+          )
+        }
+        return work(client)
+      })
     },
     async close() {
       await pglite.close()

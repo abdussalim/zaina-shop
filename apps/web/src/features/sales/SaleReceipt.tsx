@@ -28,6 +28,7 @@ export function SaleReceipt() {
         queryClient.invalidateQueries({ queryKey: ['products'] }),
         queryClient.invalidateQueries({ queryKey: ['inventory'] }),
         queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+        queryClient.invalidateQueries({ queryKey: ['reports'] }),
       ])
     },
   })
@@ -63,7 +64,7 @@ export function SaleReceipt() {
 
       <Modal open={cancelOpen} onOpenChange={setCancelOpen} title="Batalkan penjualan?" description="Stok setiap barang akan dikembalikan. Tindakan ini hanya dapat dilakukan sekali." size="small">
         <form className="form-stack" onSubmit={(event) => { event.preventDefault(); cancellation.mutate() }}>
-          <label className="form-field"><span>Alasan pembatalan</span><textarea autoFocus rows={3} minLength={3} required value={reason} onChange={(event) => setReason(event.target.value)} /></label>
+          <label className="form-field"><span>Alasan pembatalan</span><textarea rows={3} minLength={3} required value={reason} onChange={(event) => setReason(event.target.value)} /></label>
           {cancellation.error ? <div className="form-alert" role="alert">{cancellation.error instanceof ApiClientError ? cancellation.error.message : 'Penjualan belum dapat dibatalkan.'}</div> : null}
           <div className="form-actions"><Button type="button" variant="ghost" onClick={() => setCancelOpen(false)}>Kembali</Button><Button type="submit" variant="danger" pending={cancellation.isPending} disabled={reason.trim().length < 3}>Ya, batalkan</Button></div>
         </form>

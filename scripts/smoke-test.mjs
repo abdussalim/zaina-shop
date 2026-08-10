@@ -1,15 +1,18 @@
 import assert from 'node:assert/strict'
-import { randomUUID } from 'node:crypto'
 
 if (process.argv.includes('--help')) {
   console.log(`Pemakaian:
   SMOKE_USERNAME=toko SMOKE_PASSWORD=... node scripts/smoke-test.mjs [--base-url URL]
 
-Smoke test membuat satu barang sementara, menerima 1 lusin, menjual 2 buah,
-membatalkan penjualan, memverifikasi saldo, lalu mengarsipkan barang.`)
+Smoke test produksi ini hanya membaca health, sesi, katalog, dashboard,
+ringkasan persediaan, dan pengaturan toko. Tidak ada data usaha yang dibuat.`)
   process.exit(0)
 }
-const baseUrl = argumentValue('--base-url') ?? process.env.SMOKE_BASE_URL ?? 'http://localhost:8080'
+
+const baseUrl =
+  argumentValue('--base-url') ??
+  process.env.SMOKE_BASE_URL ??
+  'http://localhost:8080'
 const username = process.env.SMOKE_USERNAME
 const password = process.env.SMOKE_PASSWORD
 
@@ -33,66 +36,47 @@ async function request(path, options = {}) {
   const text = await response.text()
   const payload = text ? JSON.parse(text) : undefined
   if (!response.ok) {
-    throw new Error(`${options.method ?? 'GET'} ${path} gagal (${response.status}): ${payload?.error?.message ?? text}`)
+    throw new Error(
+      `${options.method ?? 'GET'} ${path} gagal (${response.status}): ${payload?.error?.message ?? text}`,
+    )
   }
   return payload?.data
 }
 
 function post(path, body) {
-  return request(path, { method: 'POST', body: JSON.stringify(body) })
+  return request(path, {
+    method: 'POST',
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+  })
 }
 
+const health = await request('/api/v1/health')
+assert.equal(health.status, 'ok', 'API harus sehat')
+
 await post('/api/v1/auth/login', { username, password })
-const categories = await request('/api/v1/categories')
-assert.ok(categories.length > 0, 'Kategori awal harus tersedia')
+const authenticatedUser = await request('/api/v1/auth/session')
+assert.equal(authenticatedUser.username, username, 'Sesi harus memakai akun yang diuji')
 
-const token = `${Date.now()}-${randomUUID().slice(0, 6)}`
-const product = await post('/api/v1/products', {
-  sku: `SMOKE-${token}`,
-  name: `Barang Uji ${token}`,
-  categoryId: categories[0].id,
-  baseUnit: 'buah',
-  costPrice: 7_000,
-  salePrice: 10_000,
-  minimumStock: 2,
-  units: [
-    { name: 'buah', factor: 1, salePrice: 10_000, isDefault: true },
-    { name: 'lusin', factor: 12, salePrice: 84_000, isDefault: false },
-  ],
-})
-const piece = product.units.find((unit) => unit.name === 'buah')
-const dozen = product.units.find((unit) => unit.name === 'lusin')
-assert.ok(piece && dozen, 'Satuan buah dan lusin harus dibuat')
+const [categories, products, dashboard, inventory, settings] = await Promise.all([
+  request('/api/v1/categories'),
+  request('/api/v1/products'),
+  request('/api/v1/dashboard'),
+  request('/api/v1/inventory/summary'),
+  request('/api/v1/settings/store'),
+])
+assert.ok(Array.isArray(categories), 'Kategori harus berupa daftar')
+assert.ok(Array.isArray(products), 'Produk harus berupa daftar')
+assert.ok(Array.isArray(dashboard.recentSales), 'Dashboard harus memuat transaksi terbaru')
+assert.ok(
+  Number.isFinite(inventory.totalProducts) && Number.isFinite(inventory.inventoryValue),
+  'Ringkasan persediaan harus memuat metrik stok',
+)
+assert.ok(settings.storeName, 'Nama toko harus tersedia')
 
-await post('/api/v1/inventory/movements', {
-  idempotencyKey: randomUUID(),
-  type: 'RECEIPT',
-  productId: product.id,
-  unitId: dozen.id,
-  quantity: 1,
-  unitCost: 84_000,
-  note: 'Smoke test penerimaan',
-})
-assert.equal((await request(`/api/v1/products/${product.id}`)).balanceBase, 12)
-
-const sale = await post('/api/v1/sales', {
-  idempotencyKey: randomUUID(),
-  discount: 0,
-  amountPaid: 20_000,
-  note: 'Smoke test penjualan',
-  items: [{ productId: product.id, unitId: piece.id, quantity: 2 }],
-})
-assert.equal((await request(`/api/v1/products/${product.id}`)).balanceBase, 10)
-
-const dashboard = await request('/api/v1/dashboard')
-assert.ok(Array.isArray(dashboard.recentSales), 'Dashboard harus mengembalikan transaksi terbaru')
-
-await post(`/api/v1/sales/${sale.id}/cancel`, { reason: 'Pembersihan smoke test' })
-assert.equal((await request(`/api/v1/products/${product.id}`)).balanceBase, 12)
-await post(`/api/v1/products/${product.id}/archive`)
 await post('/api/v1/auth/logout')
-
-console.log(`Smoke test lulus: ${product.sku}, transaksi ${sale.saleNumber}`)
+console.log(
+  `Smoke test baca-saja lulus: ${settings.storeName}, ${products.length} produk aktif.`,
+)
 
 function argumentValue(name) {
   const index = process.argv.indexOf(name)

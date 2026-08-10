@@ -1,12 +1,13 @@
 import { QueryClient, QueryClientProvider, useQuery, useQueryClient } from '@tanstack/react-query'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { Toaster } from 'sonner'
-import { lazy } from 'react'
+import { lazy, useEffect, useState } from 'react'
 
-import { apiRequest, ApiClientError } from '../api/client.js'
+import { apiRequest, ApiClientError, SESSION_EXPIRED_EVENT } from '../api/client.js'
 import type { StoreSettings } from '../api/types.js'
 import { LoadingState } from '../components/ui/States.js'
 import { LoginPage, type AuthenticatedUser } from '../features/auth/LoginPage.js'
+import { SessionReauthDialog } from '../features/auth/SessionReauthDialog.js'
 import { AppShell } from './AppShell.js'
 import { defaultStoreSettings } from './StoreSettingsContext.js'
 
@@ -44,6 +45,12 @@ const queryClient = new QueryClient({
 
 function RoutedApp() {
   const cache = useQueryClient()
+  const [reauthRequired, setReauthRequired] = useState(false)
+  useEffect(() => {
+    const requireReauthentication = () => setReauthRequired(true)
+    window.addEventListener(SESSION_EXPIRED_EVENT, requireReauthentication)
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, requireReauthentication)
+  }, [])
   const session = useQuery({
     queryKey: ['session'],
     queryFn: () => apiRequest<AuthenticatedUser>('/api/v1/auth/session'),
@@ -64,7 +71,10 @@ function RoutedApp() {
       <Routes>
         <Route
           path="/login"
-          element={<LoginPage onAuthenticated={(user) => cache.setQueryData(['session'], user)} />}
+          element={<LoginPage onAuthenticated={(user) => {
+            cache.setQueryData(['session'], user)
+            setReauthRequired(false)
+          }} />}
         />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
@@ -76,7 +86,8 @@ function RoutedApp() {
   }
 
   return (
-    <Routes>
+    <>
+      <Routes>
       <Route
         element={
           <AppShell
@@ -97,7 +108,16 @@ function RoutedApp() {
       </Route>
       <Route path="/login" element={<Navigate to="/" replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+      </Routes>
+      <SessionReauthDialog
+        open={reauthRequired}
+        onAuthenticated={(user) => {
+          cache.setQueryData(['session'], user)
+          setReauthRequired(false)
+          void cache.invalidateQueries()
+        }}
+      />
+    </>
   )
 }
 

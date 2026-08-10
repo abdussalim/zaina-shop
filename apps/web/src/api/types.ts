@@ -49,6 +49,11 @@ export interface StockMovement {
   createdAt: string
 }
 
+export interface StockMovementPage {
+  items: StockMovement[]
+  nextCursor: string | null
+}
+
 export interface SaleItem {
   id: string
   productId: string

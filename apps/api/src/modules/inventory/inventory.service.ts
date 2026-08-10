@@ -81,6 +81,8 @@ export function createInventoryService(database: Database) {
           return insertMovement(transaction, {
             input,
             actorId,
+            productName: stock.productName,
+            unitName: stock.unitName,
             factor: stock.factor,
             quantityBase,
             balanceAfter,
@@ -101,6 +103,7 @@ export function createInventoryService(database: Database) {
     listMovements(filters: {
       productId?: string
       type?: LedgerMovementType
+      cursor?: string
       limit: number
     }) {
       return listMovements(database, filters)

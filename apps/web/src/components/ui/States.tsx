@@ -3,10 +3,10 @@ import type { ReactNode } from 'react'
 
 export function LoadingState({ label = 'Memuat data' }: { label?: string }) {
   return (
-    <div className="loading-state" role="status">
+    <output className="loading-state">
       <span className="loading-state__mark" aria-hidden="true" />
       <span>{label}…</span>
-    </div>
+    </output>
   )
 }
 

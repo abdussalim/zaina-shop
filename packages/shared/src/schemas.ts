@@ -25,9 +25,9 @@ export const productUnitInputSchema = z.object({
 
 export const productInputSchema = z
   .object({
-    sku: z.string().trim().min(1).max(60),
+    sku: z.string().trim().min(1, 'SKU wajib diisi').max(60),
     barcode: optionalText(100),
-    name: z.string().trim().min(2).max(160),
+    name: z.string().trim().min(2, 'Nama barang minimal 2 karakter').max(160),
     categoryId: z.uuid(),
     location: optionalText(100),
     baseUnit: z.string().trim().min(1).max(40),
@@ -80,6 +80,23 @@ export const productInputSchema = z
         code: 'custom',
         path: ['units'],
         message: 'Nama satuan tidak boleh duplikat',
+      })
+    }
+
+    const unitIds = product.units.flatMap((unit) => (unit.id ? [unit.id] : []))
+    if (new Set(unitIds).size !== unitIds.length) {
+      context.addIssue({
+        code: 'custom',
+        path: ['units'],
+        message: 'ID satuan tidak boleh duplikat',
+      })
+    }
+
+    if (product.units.filter((unit) => unit.factor === 1).length !== 1) {
+      context.addIssue({
+        code: 'custom',
+        path: ['units'],
+        message: 'Hanya satuan dasar yang boleh memiliki faktor 1',
       })
     }
   })
@@ -152,7 +169,7 @@ export const categoryInputSchema = z.object({
 })
 
 export const storeSettingsInputSchema = z.object({
-  storeName: z.string().trim().min(2).max(160),
+  storeName: z.string().trim().min(2, 'Nama toko minimal 2 karakter').max(160),
   address: optionalText(500),
   phone: optionalText(40),
   timezone: z.enum(['Asia/Jakarta', 'Asia/Makassar', 'Asia/Jayapura']),

@@ -33,6 +33,7 @@ const server = app.listen(config.port, '0.0.0.0', () => {
 async function shutdown(signal: string) {
   console.info(`Menerima ${signal}, menghentikan server...`)
   server.close(async () => {
+    await Promise.resolve(sessionStore.close())
     await database.close()
     process.exit(0)
   })

@@ -7,6 +7,11 @@ import { requireSession } from '../auth/auth.routes.js'
 import type { createInventoryService } from './inventory.service.js'
 
 type InventoryService = ReturnType<typeof createInventoryService>
+const ledgerMovementTypeSchema = z.enum([
+  ...movementTypeSchema.options,
+  'SALE',
+  'SALE_REVERSAL',
+])
 
 export function createInventoryRouter(service: InventoryService): Router {
   const router = Router()
@@ -22,7 +27,8 @@ export function createInventoryRouter(service: InventoryService): Router {
 
   router.get('/inventory/movements', async (request, response) => {
     const productId = z.uuid().optional().parse(request.query.productId)
-    const type = movementTypeSchema.optional().parse(request.query.type)
+    const type = ledgerMovementTypeSchema.optional().parse(request.query.type)
+    const cursor = z.uuid().optional().parse(request.query.cursor)
     const limit = z.coerce.number().int().min(1).max(250).default(100).parse(request.query.limit)
     return sendData(
       response,
@@ -30,6 +36,7 @@ export function createInventoryRouter(service: InventoryService): Router {
         limit,
         ...(productId ? { productId } : {}),
         ...(type ? { type } : {}),
+        ...(cursor ? { cursor } : {}),
       }),
     )
   })

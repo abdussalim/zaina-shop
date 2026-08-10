@@ -52,6 +52,28 @@ describe('productInputSchema', () => {
     expect(result.success).toBe(false)
   })
 
+  it('rejects duplicate unit identifiers', () => {
+    const unitId = '3eae813d-4ab1-454b-aa01-81463ed07617'
+    const result = productInputSchema.safeParse({
+      ...validProduct,
+      units: validProduct.units.map((unit) => ({ ...unit, id: unitId })),
+    })
+
+    expect(result.success).toBe(false)
+  })
+
+  it('rejects a second factor-one unit that is not the base unit', () => {
+    const result = productInputSchema.safeParse({
+      ...validProduct,
+      units: [
+        ...validProduct.units,
+        { name: 'ecer', factor: 1, salePrice: 10_000, isDefault: false },
+      ],
+    })
+
+    expect(result.success).toBe(false)
+  })
+
   it('keeps the base-unit selling price aligned with the product price', () => {
     const result = productInputSchema.safeParse({
       ...validProduct,

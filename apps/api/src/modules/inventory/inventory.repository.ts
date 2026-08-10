@@ -46,6 +46,8 @@ export interface LockedStock {
 export interface MovementInsert {
   input: StockMovementInput
   actorId: string
+  productName: string
+  unitName: string
   factor: number
   quantityBase: number
   balanceAfter: number
@@ -125,20 +127,21 @@ export async function insertMovement(
   const { input } = movement
   const result = await database.query<MovementRow>(
     `INSERT INTO stock_movements (
-       id, idempotency_key, product_id, unit_id, movement_type,
+       id, idempotency_key, product_id, product_name, unit_id, unit_name, movement_type,
        quantity_input, factor_snapshot, quantity_base, balance_after,
        unit_cost, external_reference, note, created_by
-     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-     RETURNING id, idempotency_key, product_id,
-       (SELECT name FROM products WHERE id = product_id) AS product_name,
-       unit_id, (SELECT name FROM product_units WHERE id = unit_id) AS unit_name,
+     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+     RETURNING id, idempotency_key, product_id, product_name,
+       unit_id, unit_name,
        movement_type, quantity_input, factor_snapshot, quantity_base,
        balance_after, unit_cost, external_reference, note, created_by, created_at`,
     [
       id,
       input.idempotencyKey,
       input.productId,
+      movement.productName,
       input.unitId,
+      movement.unitName,
       input.type,
       input.quantity,
       movement.factor,
@@ -155,7 +158,12 @@ export async function insertMovement(
 
 export async function listMovements(
   database: Database,
-  filters: { productId?: string; type?: LedgerMovementType; limit: number },
+  filters: {
+    productId?: string
+    type?: LedgerMovementType
+    cursor?: string
+    limit: number
+  },
 ) {
   const values: unknown[] = []
   const conditions: string[] = []
@@ -167,7 +175,17 @@ export async function listMovements(
     values.push(filters.type)
     conditions.push(`m.movement_type = $${values.length}`)
   }
-  values.push(filters.limit)
+  if (filters.cursor) {
+    values.push(filters.cursor)
+    conditions.push(
+      `(m.created_at, m.id) < (
+         SELECT cursor.created_at, cursor.id
+         FROM stock_movements AS cursor
+         WHERE cursor.id = $${values.length}
+       )`,
+    )
+  }
+  values.push(filters.limit + 1)
   const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
   const result = await database.query<MovementRow>(
     `${movementSelect} ${where}
@@ -175,10 +193,15 @@ export async function listMovements(
      LIMIT $${values.length}`,
     values,
   )
-  return result.rows.map(mapMovement)
+  const pageRows = result.rows.slice(0, filters.limit)
+  return {
+    items: pageRows.map(mapMovement),
+    nextCursor:
+      result.rows.length > filters.limit ? (pageRows.at(-1)?.id ?? null) : null,
+  }
 }
 
-export async function getInventorySummary(database: Database) {
+export async function getInventorySummary(database: DatabaseClient) {
   const result = await database.query<{
     total_products: string | number
     inventory_value: string | number
@@ -193,7 +216,7 @@ export async function getInventorySummary(database: Database) {
             COUNT(*) FILTER (WHERE b.quantity_base <= 0) AS out_of_stock_count
      FROM products p
      JOIN inventory_balances b ON b.product_id = p.id
-     WHERE p.is_active = TRUE`,
+     WHERE p.is_active = TRUE OR b.quantity_base > 0`,
   )
   const row = result.rows[0]!
   return {
@@ -205,14 +228,12 @@ export async function getInventorySummary(database: Database) {
 }
 
 const movementSelect = `
-  SELECT m.id, m.idempotency_key, m.product_id, p.name AS product_name,
-         m.unit_id, u.name AS unit_name, m.movement_type,
+  SELECT m.id, m.idempotency_key, m.product_id, m.product_name,
+         m.unit_id, m.unit_name, m.movement_type,
          m.quantity_input, m.factor_snapshot, m.quantity_base,
          m.balance_after, m.unit_cost, m.external_reference,
          m.note, m.created_by, m.created_at
   FROM stock_movements m
-  JOIN products p ON p.id = m.product_id
-  JOIN product_units u ON u.id = m.unit_id
 `
 
 function mapMovement(row: MovementRow) {

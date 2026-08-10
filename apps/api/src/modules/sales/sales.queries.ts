@@ -67,6 +67,7 @@ export async function listSales(
     to?: string
     limit: number
   },
+  timezone: string,
 ) {
   const values: unknown[] = []
   const conditions: string[] = []
@@ -74,13 +75,22 @@ export async function listSales(
     values.push(filters.status)
     conditions.push(`s.status = $${values.length}`)
   }
+  let timezonePlaceholder: string | undefined
+  if (filters.from || filters.to) {
+    values.push(timezone)
+    timezonePlaceholder = `$${values.length}`
+  }
   if (filters.from) {
     values.push(filters.from)
-    conditions.push(`s.sold_at >= $${values.length}::date`)
+    conditions.push(
+      `(s.sold_at AT TIME ZONE ${timezonePlaceholder})::date >= $${values.length}::date`,
+    )
   }
   if (filters.to) {
     values.push(filters.to)
-    conditions.push(`s.sold_at < $${values.length}::date + INTERVAL '1 day'`)
+    conditions.push(
+      `(s.sold_at AT TIME ZONE ${timezonePlaceholder})::date <= $${values.length}::date`,
+    )
   }
   values.push(filters.limit)
   const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''

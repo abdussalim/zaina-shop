@@ -45,6 +45,7 @@ describe('sales routes', () => {
       units: { id: string; name: string }[]
     }
     const dozen = product.units.find((unit) => unit.name === 'lusin')!
+    const piece = product.units.find((unit) => unit.name === 'buah')!
 
     if (dozens > 0) {
       const receipt = await context.agent
@@ -61,7 +62,7 @@ describe('sales routes', () => {
         })
       expect(receipt.status).toBe(201)
     }
-    return { ...product, dozen }
+    return { ...product, dozen, piece }
   }
 
   it('completes a dozen sale atomically and safely replays a duplicate request', async () => {
@@ -126,7 +127,7 @@ describe('sales routes', () => {
   })
 
   it('cancels a completed sale once and restores its stock', async () => {
-    const product = await createStockedProduct('SALE-103', 2)
+    const product = await createStockedProduct('SALE-103', 1)
     const saleResponse = await context.agent
       .post('/api/v1/sales')
       .set('Origin', testConfig.appOrigin)
@@ -156,7 +157,7 @@ describe('sales routes', () => {
     expect(cancellation.body.data.status).toBe('CANCELLED')
     expect(repeated.status).toBe(409)
     expect(repeated.body.error.code).toBe('SALE_ALREADY_CANCELLED')
-    expect(detail.body.data.balanceBase).toBe(24)
+    expect(detail.body.data).toMatchObject({ balanceBase: 12, isActive: true })
   })
 
   it('lists sales and retrieves a receipt by id', async () => {
@@ -167,6 +168,43 @@ describe('sales routes', () => {
     const detail = await context.agent.get(`/api/v1/sales/${list.body.data[0].id}`)
     expect(detail.status).toBe(200)
     expect(detail.body.data.items).toEqual(expect.any(Array))
+  })
+
+  it('uses strict calendar dates and the store timezone when listing sales', async () => {
+    expect((await context.agent.get('/api/v1/sales?from=2026-02-30')).status).toBe(422)
+    expect(
+      (await context.agent.get('/api/v1/sales?from=2026-03-02&to=2026-03-01')).status,
+    ).toBe(422)
+
+    const product = await createStockedProduct('SALE-104', 1)
+    const sale = await context.agent
+      .post('/api/v1/sales')
+      .set('Origin', testConfig.appOrigin)
+      .send({
+        idempotencyKey: randomUUID(),
+        discount: 0,
+        amountPaid: 10_000,
+        items: [{ productId: product.id, unitId: product.piece.id, quantity: 1 }],
+      })
+    await context.database.query(
+      `UPDATE store_settings SET timezone = 'America/Los_Angeles' WHERE id = 1`,
+    )
+    await context.database.query(
+      `UPDATE sales SET sold_at = '2026-01-01T00:30:00.000Z' WHERE id = $1`,
+      [sale.body.data.id],
+    )
+
+    const listed = await context.agent.get(
+      '/api/v1/sales?from=2025-12-31&to=2025-12-31',
+    )
+
+    expect(listed.status).toBe(200)
+    expect(listed.body.data.map((item: { id: string }) => item.id)).toContain(
+      sale.body.data.id,
+    )
+    await context.database.query(
+      `UPDATE store_settings SET timezone = 'Asia/Jakarta' WHERE id = 1`,
+    )
   })
 
   it('uses the timezone saved in store settings for sale numbers', async () => {

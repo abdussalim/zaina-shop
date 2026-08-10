@@ -92,7 +92,6 @@ export function LoginPage({
             <Field
               label="Nama pengguna"
               autoComplete="username"
-              autoFocus
               error={errors.username?.message}
               {...register('username')}
             />
@@ -121,7 +120,7 @@ export function LoginPage({
               </div>
             ) : null}
             {success ? (
-              <div className="form-success" role="status">Selamat datang kembali</div>
+              <output className="form-success">Selamat datang kembali</output>
             ) : null}
 
             <Button type="submit" size="large" pending={isSubmitting}>

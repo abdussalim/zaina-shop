@@ -17,13 +17,18 @@
     "dev:shared": "npm run dev --workspace @zaina/shared",
     "dev:api": "npm run dev --workspace @zaina/api",
     "dev:web": "npm run dev --workspace @zaina/web",
-    "test": "npm run test --workspaces --if-present",
+    "test": "npm run build --workspace @zaina/shared && npm run test --workspace @zaina/shared && npm run test --workspace @zaina/api && npm run test --workspace @zaina/web",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "lint": "npm run lint --workspaces --if-present"
+    "lint": "oxlint --deny-warnings --react-plugin --vitest-plugin --jsx-a11y-plugin --import-plugin ."
   },
   "devDependencies": {
     "concurrently": "latest",
+    "oxlint": "^1.77.0",
     "typescript": "7.0.2",
     "vitest": "4.1.10"
+  },
+  "allowScripts": {
+    "argon2@0.45.1": true,
+    "esbuild@0.28.2": true
   }
 }

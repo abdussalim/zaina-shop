@@ -10,7 +10,10 @@ import { AppError, errorHandler } from './http/errors.js'
 import { requestContext } from './http/request-context.js'
 import { sendData } from './http/respond.js'
 import { trustedOrigin } from './http/trusted-origin.js'
-import { createAuthRouter } from './modules/auth/auth.routes.js'
+import {
+  createAuthRouter,
+  validateAuthenticatedSession,
+} from './modules/auth/auth.routes.js'
 import { createAuthService } from './modules/auth/auth.service.js'
 import { createCatalogRouter } from './modules/catalog/catalog.routes.js'
 import { createCatalogService } from './modules/catalog/catalog.service.js'
@@ -32,9 +35,12 @@ export function createApp(dependencies: AppDependencies): Express {
   const { config, database, sessionStore } = dependencies
   const app = express()
   const logger = pino({ level: config.nodeEnv === 'test' ? 'silent' : 'info' })
+  const authService = createAuthService(database)
 
   app.disable('x-powered-by')
-  if (config.isProduction) app.set('trust proxy', 1)
+  if (config.isProduction) {
+    app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal'])
+  }
   app.use(requestContext)
   app.use(pinoHttp({ logger }))
   app.use(helmet())
@@ -55,8 +61,8 @@ export function createApp(dependencies: AppDependencies): Express {
       },
     }),
   )
+  app.use(validateAuthenticatedSession(authService))
 
-  const authService = createAuthService(database)
   const catalogService = createCatalogService(database)
   const inventoryService = createInventoryService(database)
   const salesService = createSalesService(database, config.storeTimezone)

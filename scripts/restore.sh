@@ -10,9 +10,11 @@ usage() {
 
 repo_root="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 backup_file="$(CDPATH= cd -- "$(dirname -- "$1")" && pwd)/$(basename -- "$1")"
-if [[ -f "$backup_file.sha256" ]]; then
-  (cd -- "$(dirname -- "$backup_file")" && sha256sum -c "$(basename -- "$backup_file.sha256")")
-fi
+[[ -f "$backup_file.sha256" ]] || {
+  echo "Checksum tidak ditemukan: $backup_file.sha256" >&2
+  exit 2
+}
+(cd -- "$(dirname -- "$backup_file")" && sha256sum -c "$(basename -- "$backup_file.sha256")")
 compose_file="${COMPOSE_FILE:-$repo_root/compose.production.yaml}"
 compose=(docker compose --project-directory "$repo_root" -f "$compose_file")
 if [[ -f "$repo_root/.env" ]]; then
@@ -28,7 +30,12 @@ echo "Memulihkan $backup_file. Isi database saat ini akan diganti."
 "${compose[@]}" exec -T database sh -c \
   'exec pg_restore --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" --clean --if-exists --no-owner --no-privileges --exit-on-error --single-transaction' \
   < "$backup_file"
-"${compose[@]}" exec -T database sh -c \
-  'psql --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" --tuples-only --no-align --command "SELECT COUNT(*) FROM schema_migrations"'
+verification_sql="SELECT (SELECT COUNT(*) >= 2 FROM schema_migrations) AND to_regclass('users') IS NOT NULL AND to_regclass('products') IS NOT NULL AND to_regclass('stock_movements') IS NOT NULL AND to_regclass('sales') IS NOT NULL AND to_regclass('store_settings') IS NOT NULL AND to_regclass('session') IS NOT NULL AND EXISTS (SELECT 1 FROM users) AND EXISTS (SELECT 1 FROM store_settings)"
+verification="$("${compose[@]}" exec -T database sh -c \
+  'exec psql --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" --tuples-only --no-align --set ON_ERROR_STOP=1 --command "$1"' sh "$verification_sql")"
+[[ "$verification" == "t" ]] || {
+  echo "Verifikasi restore gagal: tabel inti, migrasi, pengguna, atau pengaturan tidak lengkap." >&2
+  exit 1
+}
 
 echo "Restore selesai. Jalankan kembali API dan web."

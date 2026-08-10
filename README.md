@@ -11,7 +11,7 @@ Aplikasi inventaris dan kasir sederhana untuk toko perabotan rumah serta pecah b
 - Kasir, kembalian, cetak nota, pembatalan transaksi, dan perlindungan retry agar transaksi tidak ganda.
 - Laporan penjualan/persediaan dan ekspor CSV yang aman dibuka di spreadsheet.
 - Pengaturan identitas toko, zona waktu WIB/WITA/WIT, batas stok default, dan kata sandi.
-- Docker Compose PostgreSQL 18, healthcheck, backup/restore, dan smoke test end-to-end.
+- Docker Compose PostgreSQL 18, healthcheck, backup/restore, smoke test produksi baca-saja, dan acceptance test staging.
 
 ## Menjalankan cepat dengan Docker
 
@@ -55,6 +55,7 @@ npm run lint
 npm run typecheck
 npm run build
 node scripts/smoke-test.mjs --help
+node scripts/acceptance-test.mjs --help
 ```
 
 Setelah stack hidup, jalankan smoke test dengan kredensial yang benar:
@@ -64,7 +65,14 @@ SMOKE_USERNAME=toko SMOKE_PASSWORD='kata-sandi-anda' \
   node scripts/smoke-test.mjs --base-url http://localhost:8080
 ```
 
-Smoke test membuat barang uji unik, menerima satu lusin, menjual dua buah, membatalkan transaksi, memastikan saldo kembali, lalu mengarsipkan barang uji.
+Smoke test produksi hanya memeriksa health, login/sesi, katalog, dashboard, persediaan, dan pengaturan; tidak membuat ledger usaha. Untuk menguji alur tulis lengkap pada staging atau database sekali pakai:
+
+```bash
+ACCEPTANCE_USERNAME=toko ACCEPTANCE_PASSWORD='kata-sandi-anda' \
+  node scripts/acceptance-test.mjs --allow-write --base-url http://localhost:8080
+```
+
+Acceptance test meninggalkan jejak penerimaan dan penjualan yang memang tidak boleh dihapus dari ledger. Jangan menjalankannya pada produksi.
 
 ## Deployment dan operasional
 

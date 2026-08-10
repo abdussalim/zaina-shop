@@ -79,6 +79,7 @@ export function SalesPage() {
         queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
         queryClient.invalidateQueries({ queryKey: ['inventory'] }),
         queryClient.invalidateQueries({ queryKey: ['sales'] }),
+        queryClient.invalidateQueries({ queryKey: ['reports'] }),
       ])
       navigate(`/sales/${sale.id}`)
     },

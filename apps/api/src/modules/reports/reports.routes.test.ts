@@ -102,4 +102,31 @@ describe('dashboard and report routes', () => {
     expect(response.headers['content-disposition']).toContain('attachment')
     expect(response.text).toContain("'=2+2")
   })
+
+  it('returns and exports every transaction beyond the former 500-row boundary', async () => {
+    const user = await context.database.query<{ id: string }>(
+      'SELECT id FROM users ORDER BY created_at LIMIT 1',
+    )
+    await context.database.query(
+      `INSERT INTO sales (
+         id, sale_number, idempotency_key, sold_at, subtotal, discount, total,
+         amount_paid, change_amount, created_by
+       )
+       SELECT ('70000000-0000-4000-8000-' || LPAD(number::text, 12, '0'))::uuid,
+              'BULK-' || LPAD(number::text, 4, '0'),
+              ('71000000-0000-4000-8000-' || LPAD(number::text, 12, '0'))::uuid,
+              CURRENT_TIMESTAMP - number * INTERVAL '1 second',
+              0, 0, 0, 0, 0, $1
+       FROM generate_series(1, 501) AS number`,
+      [user.rows[0]!.id],
+    )
+
+    const report = await context.agent.get('/api/v1/reports/sales')
+    const csv = await context.agent.get('/api/v1/reports/sales?format=csv')
+
+    expect(report.status).toBe(200)
+    expect(report.body.data.summary.transactionCount).toBe(502)
+    expect(report.body.data.transactions).toHaveLength(502)
+    expect(csv.text.trim().split('\n')).toHaveLength(503)
+  })
 })

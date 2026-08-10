@@ -3,12 +3,12 @@ import { saleInputSchema } from '@zaina/shared'
 import { z } from 'zod'
 
 import { sendData } from '../../http/respond.js'
+import { parseDateFilters } from '../../http/date-range.js'
 import { requireSession } from '../auth/auth.routes.js'
 import type { createSalesService } from './sales.service.js'
 
 type SalesService = ReturnType<typeof createSalesService>
 
-const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
 const cancellationSchema = z.object({ reason: z.string().trim().min(3).max(500) })
 
 export function createSalesRouter(service: SalesService): Router {
@@ -25,8 +25,7 @@ export function createSalesRouter(service: SalesService): Router {
 
   router.get('/sales', async (request, response) => {
     const status = z.enum(['COMPLETED', 'CANCELLED']).optional().parse(request.query.status)
-    const from = dateSchema.optional().parse(request.query.from)
-    const to = dateSchema.optional().parse(request.query.to)
+    const { from, to } = parseDateFilters(request.query)
     const limit = z.coerce.number().int().min(1).max(250).default(100).parse(request.query.limit)
     return sendData(
       response,

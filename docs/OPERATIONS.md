@@ -31,6 +31,17 @@ docker compose --env-file .env -f compose.production.yaml logs --since=30m api
 
 Setiap respons API memiliki `X-Request-Id`. Sertakan nilainya ketika menelusuri kegagalan agar baris log dapat dicocokkan.
 
+## Gerbang integrasi PostgreSQL
+
+Test unit sehari-hari memakai database PostgreSQL ringan di dalam proses. Sebelum rilis, jalankan juga test terhadap PostgreSQL nyata pada database pengujian yang boleh membuat schema sementara:
+
+```bash
+TEST_DATABASE_URL=postgresql://zaina_test:password@localhost:5432/zaina_test \
+  npm run test:postgres --workspace @zaina/api
+```
+
+Test ini membuat schema acak, menjalankan seluruh migrasi, memverifikasi dua sesi persisten, dan mencoba dua penjualan serentak atas satu stok. Schema sementara selalu dihapus setelah pengujian. Jangan arahkan `TEST_DATABASE_URL` ke database produksi.
+
 ## Tindakan insiden
 
 ### Web menghasilkan 502/503
@@ -61,6 +72,6 @@ Setiap respons API memiliki `X-Request-Id`. Sertakan nilainya ketika menelusuri 
 ## Batas operasional
 
 - Jalankan satu instance API untuk instalasi toko ini; Compose memang dikonfigurasi untuk satu toko dan satu akun bersama.
-- Ekspor CSV dibatasi pada transaksi terbaru yang dikembalikan laporan; gunakan backup database untuk arsip lengkap.
+- Ekspor CSV memuat seluruh transaksi dalam rentang tanggal terpilih; gunakan rentang yang wajar agar file mudah ditinjau. Backup database tetap menjadi arsip pemulihan utama.
 - Mengarsipkan barang tidak menghapus riwayatnya dan tidak dapat dibatalkan melalui UI.
 - Aplikasi membutuhkan koneksi ke VPS; belum menyediakan mode offline.

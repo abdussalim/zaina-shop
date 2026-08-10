@@ -51,6 +51,7 @@ export async function createAuthenticatedTestContext(options?: {
   if (login.status !== 200) throw new Error('Test login failed')
 
   return {
+    app,
     agent,
     database,
     close: () => database.close(),

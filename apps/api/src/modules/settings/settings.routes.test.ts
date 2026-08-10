@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import request from 'supertest'
 
 import { createAuthenticatedTestContext, testConfig } from '../../test/app-context.js'
 
@@ -38,6 +39,19 @@ describe('settings routes', () => {
   })
 
   it('requires the current password before changing the shared password', async () => {
+    const secondSession = request.agent(context.app)
+    expect(
+      (
+        await secondSession
+          .post('/api/v1/auth/login')
+          .set('Origin', testConfig.appOrigin)
+          .send({
+            username: testConfig.adminUsername,
+            password: testConfig.adminPassword,
+          })
+      ).status,
+    ).toBe(200)
+
     const rejected = await context.agent
       .post('/api/v1/settings/password')
       .set('Origin', testConfig.appOrigin)
@@ -54,9 +68,8 @@ describe('settings routes', () => {
       })
     expect(changed.status).toBe(204)
 
-    await context.agent
-      .post('/api/v1/auth/logout')
-      .set('Origin', testConfig.appOrigin)
+    expect((await context.agent.get('/api/v1/auth/session')).status).toBe(401)
+    expect((await secondSession.get('/api/v1/auth/session')).status).toBe(401)
     const login = await context.agent
       .post('/api/v1/auth/login')
       .set('Origin', testConfig.appOrigin)

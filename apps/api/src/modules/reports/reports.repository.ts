@@ -1,12 +1,15 @@
-import type { Database } from '../../db/database.js'
+import type { Database, DatabaseClient } from '../../db/database.js'
+import type { DateFilters } from '../../http/date-range.js'
 import { getInventorySummary } from '../inventory/inventory.repository.js'
 
-export interface DateFilters {
-  from?: string
-  to?: string
+export async function getDashboard(database: Database, timezone: string) {
+  return database.transaction(
+    (transaction) => getDashboardSnapshot(transaction, timezone),
+    { isolationLevel: 'REPEATABLE READ' },
+  )
 }
 
-export async function getDashboard(database: Database, timezone: string) {
+async function getDashboardSnapshot(database: DatabaseClient, timezone: string) {
   const sales = await database.query<{
     sales_today: string | number
     revenue_today: string | number
@@ -45,10 +48,9 @@ export async function getDashboard(database: Database, timezone: string) {
     quantity_base: string | number
     created_at: Date | string
   }>(
-    `SELECT m.id, p.name AS product_name, m.movement_type,
+    `SELECT m.id, m.product_name, m.movement_type,
             m.quantity_base, m.created_at
      FROM stock_movements m
-     JOIN products p ON p.id = m.product_id
      ORDER BY m.created_at DESC, m.id DESC LIMIT 6`,
   )
   const lowStockProducts = await database.query<{
@@ -105,6 +107,17 @@ export async function getSalesReport(
   filters: DateFilters,
   timezone: string,
 ) {
+  return database.transaction(
+    (transaction) => getSalesReportSnapshot(transaction, filters, timezone),
+    { isolationLevel: 'REPEATABLE READ' },
+  )
+}
+
+async function getSalesReportSnapshot(
+  database: DatabaseClient,
+  filters: DateFilters,
+  timezone: string,
+) {
   const aggregateFilter = buildSalesFilter(filters, timezone, 's')
   const summary = await database.query<{
     transaction_count: string | number
@@ -152,7 +165,7 @@ export async function getSalesReport(
   }>(
     `SELECT s.id, s.sale_number, s.sold_at, s.subtotal, s.discount, s.total
      FROM sales s WHERE ${aggregateFilter.sql}
-     ORDER BY s.sold_at DESC, s.id DESC LIMIT 500`,
+     ORDER BY s.sold_at DESC, s.id DESC`,
     aggregateFilter.values,
   )
 
@@ -189,6 +202,13 @@ export async function getSalesReport(
 }
 
 export async function getInventoryReport(database: Database) {
+  return database.transaction(
+    (transaction) => getInventoryReportSnapshot(transaction),
+    { isolationLevel: 'REPEATABLE READ' },
+  )
+}
+
+async function getInventoryReportSnapshot(database: DatabaseClient) {
   const summary = await getInventorySummary(database)
   const products = await database.query<{
     id: string
@@ -210,7 +230,7 @@ export async function getInventoryReport(database: Database) {
      FROM products p
      JOIN categories c ON c.id = p.category_id
      JOIN inventory_balances b ON b.product_id = p.id
-     WHERE p.is_active = TRUE
+     WHERE p.is_active = TRUE OR b.quantity_base > 0
      ORDER BY p.name`,
   )
   return {

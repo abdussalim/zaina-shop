@@ -1,10 +1,10 @@
-import { useQuery } from '@tanstack/react-query'
-import { ArrowDownToLine, ArrowUpFromLine, ClipboardList, TriangleAlert } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
+import { ArrowDownToLine, ArrowUpFromLine, TriangleAlert } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
 import { apiRequest } from '../../api/client.js'
-import type { Product, StockMovement } from '../../api/types.js'
+import type { Product, StockMovementPage } from '../../api/types.js'
 import { Button } from '../../components/ui/Button.js'
 import { Modal } from '../../components/ui/Modal.js'
 import { PageHeader } from '../../components/ui/PageHeader.js'
@@ -23,7 +23,18 @@ export function InventoryPage() {
   const [productFilter, setProductFilter] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
   const products = useQuery({ queryKey: ['products'], queryFn: () => apiRequest<Product[]>('/api/v1/products') })
-  const movements = useQuery({ queryKey: ['inventory', 'movements'], queryFn: () => apiRequest<StockMovement[]>('/api/v1/inventory/movements?limit=250') })
+  const movements = useInfiniteQuery({
+    queryKey: ['inventory', 'movements', productFilter, typeFilter],
+    initialPageParam: null as string | null,
+    queryFn: ({ pageParam }) => {
+      const query = new URLSearchParams({ limit: '100' })
+      if (productFilter) query.set('productId', productFilter)
+      if (typeFilter) query.set('type', typeFilter)
+      if (pageParam) query.set('cursor', pageParam)
+      return apiRequest<StockMovementPage>(`/api/v1/inventory/movements?${query}`)
+    },
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
+  })
   const summary = useQuery({ queryKey: ['inventory', 'summary'], queryFn: () => apiRequest<{ totalProducts: number; inventoryValue: number; lowStockCount: number; outOfStockCount: number }>('/api/v1/inventory/summary') })
 
   useEffect(() => {
@@ -32,15 +43,7 @@ export function InventoryPage() {
     if (action === 'damage') setFormType('DAMAGE')
   }, [searchParams])
 
-  const filtered = useMemo(
-    () =>
-      (movements.data ?? []).filter(
-        (movement) =>
-          (!productFilter || movement.productId === productFilter) &&
-          (!typeFilter || movement.type === typeFilter),
-      ),
-    [movements.data, productFilter, typeFilter],
-  )
+  const filtered = movements.data?.pages.flatMap((page) => page.items) ?? []
 
   function closeForm() {
     setFormType(undefined)
@@ -89,7 +92,7 @@ export function InventoryPage() {
               <tbody>{filtered.map((movement) => (
                 <tr key={movement.id}>
                   <td data-label="Waktu"><span>{formatDateTime(movement.createdAt, storeSettings.timezone)}</span></td>
-                  <td data-label="Barang"><Link to={`/products/${movement.productId}`}><strong>{movement.productName}</strong></Link></td>
+                  <td data-label="Barang"><Link aria-label={`Buka ${movement.productName}`} to={`/products/${movement.productId}`}><strong>{movement.productName}</strong></Link></td>
                   <td data-label="Jenis"><StatusBadge tone={movement.quantityBase >= 0 ? 'success' : movement.type === 'SALE' ? 'info' : 'warning'}>{movementLabels[movement.type] ?? movement.type}</StatusBadge></td>
                   <td data-label="Input"><strong>{formatQuantity(movement.quantityInput)}</strong> <small>{movement.unitName}</small></td>
                   <td data-label="Perubahan"><strong className={movement.quantityBase >= 0 ? 'quantity-in' : 'quantity-out'}>{movement.quantityBase >= 0 ? '+' : ''}{formatQuantity(movement.quantityBase)}</strong></td>
@@ -98,6 +101,17 @@ export function InventoryPage() {
                 </tr>
               ))}</tbody>
             </table>
+            {movements.hasNextPage ? (
+              <div className="form-actions ledger-pagination">
+                <Button
+                  variant="secondary"
+                  pending={movements.isFetchingNextPage}
+                  onClick={() => void movements.fetchNextPage()}
+                >
+                  Muat riwayat sebelumnya
+                </Button>
+              </div>
+            ) : null}
           </div>
         ) : null}
       </section>

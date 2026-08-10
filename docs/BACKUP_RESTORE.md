@@ -60,7 +60,7 @@ docker compose --env-file .env -f compose.production.yaml stop web api
 docker compose --env-file .env -f compose.production.yaml up -d api web
 ```
 
-Skrip memverifikasi checksum bila file pendamping tersedia, memakai satu transaksi, berhenti pada kesalahan pertama, dan memeriksa tabel migrasi setelah restore. Skrip menolak berjalan bila service API masih aktif.
+Skrip mewajibkan dan memverifikasi file checksum pendamping, memakai satu transaksi, berhenti pada kesalahan pertama, lalu memeriksa migrasi, tabel inti, pengguna, dan pengaturan toko. Skrip menolak berjalan bila service API masih aktif.
 
 Setelah restore:
 

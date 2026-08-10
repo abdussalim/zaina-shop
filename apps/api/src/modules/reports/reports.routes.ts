@@ -1,7 +1,7 @@
 import { Router, type Response } from 'express'
-import { z } from 'zod'
 
 import type { Database } from '../../db/database.js'
+import { parseDateFilters } from '../../http/date-range.js'
 import { sendData } from '../../http/respond.js'
 import { requireSession } from '../auth/auth.routes.js'
 import { findStoreTimezone } from '../settings/settings.repository.js'
@@ -10,10 +10,7 @@ import {
   getDashboard,
   getInventoryReport,
   getSalesReport,
-  type DateFilters,
 } from './reports.repository.js'
-
-const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
 
 export function createReportsRouter(database: Database, timezone: string): Router {
   const router = Router()
@@ -39,15 +36,6 @@ export function createReportsRouter(database: Database, timezone: string): Route
   })
 
   return router
-}
-
-function parseDateFilters(query: Record<string, unknown>): DateFilters {
-  const from = dateSchema.optional().parse(query.from)
-  const to = dateSchema.optional().parse(query.to)
-  return {
-    ...(from ? { from } : {}),
-    ...(to ? { to } : {}),
-  }
 }
 
 function sendSalesCsv(

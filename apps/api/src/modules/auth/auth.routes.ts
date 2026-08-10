@@ -7,7 +7,7 @@ import { sendData } from '../../http/respond.js'
 import type { AuthService } from './auth.service.js'
 
 export const requireSession: RequestHandler = (request, _response, next) => {
-  if (!request.session.user) {
+  if (!request.session?.user) {
     next(new AppError(401, 'UNAUTHORIZED', 'Silakan masuk terlebih dahulu'))
     return
   }
@@ -26,6 +26,30 @@ function destroySession(request: Request): Promise<void> {
   })
 }
 
+export function validateAuthenticatedSession(
+  authService: AuthService,
+): RequestHandler {
+  return async (request, _response, next) => {
+    const user = request.session.user
+    if (!user) {
+      next()
+      return
+    }
+
+    const passwordChangedAt = request.session.passwordChangedAt
+    if (
+      passwordChangedAt &&
+      (await authService.isSessionCurrent(user.id, passwordChangedAt))
+    ) {
+      next()
+      return
+    }
+
+    await destroySession(request)
+    next()
+  }
+}
+
 export function createAuthRouter(authService: AuthService): Router {
   const router = Router()
   const loginLimiter = rateLimit({
@@ -33,14 +57,24 @@ export function createAuthRouter(authService: AuthService): Router {
     limit: 10,
     standardHeaders: 'draft-8',
     legacyHeaders: false,
+    handler: (_request, _response, next) => {
+      next(
+        new AppError(
+          429,
+          'LOGIN_RATE_LIMITED',
+          'Terlalu banyak percobaan masuk. Coba lagi dalam 15 menit',
+        ),
+      )
+    },
   })
 
   router.post('/login', loginLimiter, async (request, response) => {
     const input = loginInputSchema.parse(request.body)
-    const user = await authService.authenticate(input.username, input.password)
+    const authenticated = await authService.authenticate(input.username, input.password)
     await regenerateSession(request)
-    request.session.user = user
-    return sendData(response, user)
+    request.session.user = authenticated.user
+    request.session.passwordChangedAt = authenticated.passwordChangedAt
+    return sendData(response, authenticated.user)
   })
 
   router.post('/logout', requireSession, async (request, response) => {

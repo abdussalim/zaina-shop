@@ -13,3 +13,16 @@ export async function findActiveUserByUsername(
   )
   return result.rows[0]
 }
+
+export async function findActiveUserPasswordChangedAt(
+  database: Database,
+  userId: string,
+): Promise<Date | string | undefined> {
+  const result = await database.query<{ password_changed_at: Date | string }>(
+    `SELECT password_changed_at
+     FROM users
+     WHERE id = $1 AND is_active = TRUE`,
+    [userId],
+  )
+  return result.rows[0]?.password_changed_at
+}

@@ -88,7 +88,7 @@ export async function findProducts(
 
   const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
   const result = await database.query<ProductRecord>(
-    `${productSelect} ${where} ORDER BY p.name LIMIT 250`,
+    `${productSelect} ${where} ORDER BY p.name, p.id`,
     values,
   )
   const units = await findUnits(

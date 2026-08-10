@@ -41,11 +41,15 @@ describe('runMigrations', () => {
 
   it('does not apply the same migration twice', async () => {
     await runMigrations(database)
+    const firstRun = await database.query<{ version: string }>(
+      'select version from schema_migrations order by version',
+    )
     await runMigrations(database)
 
-    const result = await database.query<{ count: string }>(
-      'select count(*)::text as count from schema_migrations',
+    const secondRun = await database.query<{ version: string }>(
+      'select version from schema_migrations order by version',
     )
-    expect(result.rows[0]?.count).toBe('1')
+    expect(firstRun.rows.length).toBeGreaterThan(0)
+    expect(secondRun.rows).toEqual(firstRun.rows)
   })
 })

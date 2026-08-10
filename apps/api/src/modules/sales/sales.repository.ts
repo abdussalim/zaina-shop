@@ -160,6 +160,17 @@ export async function setStockBalance(
   )
 }
 
+export async function reactivateProduct(
+  database: DatabaseClient,
+  productId: string,
+): Promise<void> {
+  await database.query(
+    `UPDATE products SET is_active = TRUE, updated_at = CURRENT_TIMESTAMP
+     WHERE id = $1 AND is_active = FALSE`,
+    [productId],
+  )
+}
+
 export async function insertSaleMovement(
   database: DatabaseClient,
   movement: {
@@ -174,15 +185,17 @@ export async function insertSaleMovement(
 ): Promise<void> {
   await database.query(
     `INSERT INTO stock_movements (
-       id, idempotency_key, product_id, unit_id, movement_type,
+       id, idempotency_key, product_id, product_name, unit_id, unit_name, movement_type,
        quantity_input, factor_snapshot, quantity_base, balance_after,
        reference_id, note, created_by
-     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
     [
       randomUUID(),
       randomUUID(),
       movement.line.productId,
+      movement.line.productName,
       movement.line.unitId,
+      movement.line.unitName,
       movement.type,
       movement.line.quantityInput,
       movement.line.factor,

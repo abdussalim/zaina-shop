@@ -34,18 +34,44 @@ export const errorHandler: ErrorRequestHandler = (error, request, response, _nex
     return
   }
 
+  const parserError = error as { type?: string }
+  if (parserError.type === 'entity.parse.failed') {
+    sendAppError(
+      response,
+      request.id,
+      new AppError(400, 'INVALID_JSON', 'Format JSON tidak valid'),
+    )
+    return
+  }
+  if (parserError.type === 'entity.too.large') {
+    sendAppError(
+      response,
+      request.id,
+      new AppError(413, 'PAYLOAD_TOO_LARGE', 'Data yang dikirim terlalu besar'),
+    )
+    return
+  }
+
   const appError =
     error instanceof AppError
       ? error
       : new AppError(500, 'INTERNAL_ERROR', 'Terjadi kesalahan pada server')
 
   if (appError.status >= 500) request.log?.error({ error }, 'request failed')
+  sendAppError(response, request.id, appError)
+}
+
+function sendAppError(
+  response: Parameters<ErrorRequestHandler>[2],
+  requestId: unknown,
+  appError: AppError,
+) {
   response.status(appError.status).json({
     error: {
       code: appError.code,
       message: appError.message,
       ...(appError.fields ? { fields: appError.fields } : {}),
-      requestId: request.id,
+      requestId,
     },
   })
 }

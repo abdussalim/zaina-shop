@@ -10,6 +10,7 @@ interface ModalProps {
   children: ReactNode
   footer?: ReactNode
   size?: 'small' | 'medium' | 'large'
+  dismissible?: boolean
 }
 
 export function Modal({
@@ -20,12 +21,21 @@ export function Modal({
   children,
   footer,
   size = 'medium',
+  dismissible = true,
 }: ModalProps) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="modal__overlay" />
-        <Dialog.Content className={`modal modal--${size}`}>
+        <Dialog.Content
+          className={`modal modal--${size}`}
+          onEscapeKeyDown={(event) => {
+            if (!dismissible) event.preventDefault()
+          }}
+          onPointerDownOutside={(event) => {
+            if (!dismissible) event.preventDefault()
+          }}
+        >
           <div className="modal__header">
             <div>
               <Dialog.Title className="modal__title">{title}</Dialog.Title>
@@ -35,9 +45,11 @@ export function Modal({
                 </Dialog.Description>
               ) : null}
             </div>
-            <Dialog.Close className="icon-button" aria-label="Tutup dialog">
-              <X aria-hidden="true" />
-            </Dialog.Close>
+            {dismissible ? (
+              <Dialog.Close className="icon-button" aria-label="Tutup dialog">
+                <X aria-hidden="true" />
+              </Dialog.Close>
+            ) : null}
           </div>
           <div className="modal__body">{children}</div>
           {footer ? <div className="modal__footer">{footer}</div> : null}

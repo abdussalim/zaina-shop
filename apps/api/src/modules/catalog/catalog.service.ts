@@ -49,8 +49,17 @@ export function createCatalogService(database: Database) {
       }
     },
     async archiveProduct(productId: string) {
-      const archived = await archiveProductRecord(database, productId)
-      if (!archived) throw new AppError(404, 'PRODUCT_NOT_FOUND', 'Barang tidak ditemukan')
+      const result = await archiveProductRecord(database, productId)
+      if (result === 'NOT_FOUND') {
+        throw new AppError(404, 'PRODUCT_NOT_FOUND', 'Barang tidak ditemukan')
+      }
+      if (result === 'HAS_STOCK') {
+        throw new AppError(
+          409,
+          'PRODUCT_HAS_STOCK',
+          'Kosongkan stok barang sebelum mengarsipkannya',
+        )
+      }
       return await this.getProduct(productId)
     },
   }

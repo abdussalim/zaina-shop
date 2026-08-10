@@ -82,12 +82,16 @@ server {
 
 Tambahkan redirect port 80 ke HTTPS menggunakan konfigurasi standar penyedia sertifikat. Jangan menyimpan kunci sertifikat di repository. `APP_ORIGIN` harus sama persis dengan origin publik HTTPS, tanpa path dan tanpa slash di akhir.
 
+API hanya mempercayai alamat loopback dan jaringan privat sebagai hop proxy. Konfigurasi host di atas harus menimpa atau menambahkan `X-Forwarded-For` seperti contoh agar pembatas login dan log audit memakai IP klien, bukan IP gateway Docker.
+
 ## 5. Verifikasi setelah deployment
 
 ```bash
 SMOKE_USERNAME=toko SMOKE_PASSWORD='<ADMIN_PASSWORD>' \
   node scripts/smoke-test.mjs --base-url https://inventaris.example.com
 ```
+
+Smoke test produksi bersifat baca-saja terhadap data usaha: hanya sesi login sementara yang dibuat lalu ditutup. Alur penerimaan/penjualan penuh tersedia melalui `scripts/acceptance-test.mjs --allow-write` dan hanya boleh dijalankan pada staging atau database sekali pakai.
 
 Setelah login pertama, ubah kata sandi melalui Pengaturan. Perubahan kata sandi di `.env` setelah akun dibuat tidak mengubah akun yang sudah tersimpan.
 
@@ -101,7 +105,7 @@ docker compose --env-file .env -f compose.production.yaml up -d
 docker compose --env-file .env -f compose.production.yaml ps
 ```
 
-Jalankan healthcheck dan smoke test setelah setiap upgrade. Jangan mengganti major image PostgreSQL hanya dengan mengubah tag; lakukan backup teruji dan prosedur `pg_upgrade` sesuai dokumentasi PostgreSQL.
+Jalankan healthcheck dan smoke test baca-saja setelah setiap upgrade. Jangan mengganti major image PostgreSQL hanya dengan mengubah tag; lakukan backup teruji dan prosedur `pg_upgrade` sesuai dokumentasi PostgreSQL.
 
 ## Perintah diagnosis
 

@@ -15,6 +15,7 @@ import {
   lockSale,
   lockStockProducts,
   markSaleCancelled,
+  reactivateProduct,
   setStockBalance,
   type SaleLineSnapshot,
   type UnitSnapshot,
@@ -109,8 +110,9 @@ export function createSalesService(database: Database, timezone: string) {
         throw error
       }
     },
-    list(filters: Parameters<typeof listSales>[1]) {
-      return listSales(database, filters)
+    async list(filters: Parameters<typeof listSales>[1]) {
+      const currentTimezone = await findStoreTimezone(database, timezone)
+      return listSales(database, filters, currentTimezone)
     },
     async get(saleId: string) {
       const sale = await findSale(database, saleId)
@@ -136,6 +138,7 @@ export function createSalesService(database: Database, timezone: string) {
           const balanceAfter = toThreeDecimals(stock.balance + line.quantityBase)
           stock.balance = balanceAfter
           await setStockBalance(transaction, line.productId, balanceAfter)
+          await reactivateProduct(transaction, line.productId)
           await insertSaleMovement(transaction, {
             saleId,
             line,

@@ -38,6 +38,8 @@ export function ProductsPage() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['products'] }),
         queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+        queryClient.invalidateQueries({ queryKey: ['inventory'] }),
+        queryClient.invalidateQueries({ queryKey: ['reports'] }),
       ])
     },
   })
@@ -79,11 +81,11 @@ export function ProductsPage() {
       {filtered.length ? (
         <div className="data-surface">
           <table className="data-table product-table">
-            <thead><tr><th>Barang</th><th>Kategori / rak</th><th>Harga jual</th><th>Saldo dasar</th><th>Status</th><th /></tr></thead>
+            <thead><tr><th>Barang</th><th>Kategori / rak</th><th>Harga jual</th><th>Saldo dasar</th><th>Status</th><th aria-label="Tindakan" /></tr></thead>
             <tbody>
               {filtered.map((product) => (
                 <tr key={product.id}>
-                  <td data-label="Barang"><span className="table-product"><i style={{ background: product.category.color }} /><span><strong>{product.name}</strong><small>{product.sku}</small></span></span></td>
+                  <td data-label="Barang"><span className="table-product">{product.imageUrl ? <img src={product.imageUrl} alt="" loading="lazy" /> : <i style={{ background: product.category.color }} />}<span><strong>{product.name}</strong><small>{product.sku}</small></span></span></td>
                   <td data-label="Kategori / rak"><strong>{product.category.name}</strong><small>{product.location ?? 'Lokasi belum diisi'}</small></td>
                   <td data-label="Harga jual"><strong>{formatCurrency(product.salePrice)}</strong><small>per {product.baseUnit}</small></td>
                   <td data-label="Saldo dasar"><strong className="data-number">{formatQuantity(product.balanceBase)}</strong><small>{product.baseUnit}</small></td>

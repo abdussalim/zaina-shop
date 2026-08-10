@@ -13,8 +13,15 @@ export interface DatabaseClient {
   exec(sql: string): Promise<void>
 }
 
+export interface TransactionOptions {
+  isolationLevel?: 'READ COMMITTED' | 'REPEATABLE READ' | 'SERIALIZABLE'
+}
+
 export interface Database extends DatabaseClient {
-  transaction<T>(work: (client: DatabaseClient) => Promise<T>): Promise<T>
+  transaction<T>(
+    work: (client: DatabaseClient) => Promise<T>,
+    options?: TransactionOptions,
+  ): Promise<T>
   close(): Promise<void>
 }
 
@@ -38,10 +45,18 @@ export function createPostgresDatabase(connectionString: string): Database {
 
   return {
     ...client,
-    async transaction<T>(work: (transaction: DatabaseClient) => Promise<T>) {
+    async transaction<T>(
+      work: (transaction: DatabaseClient) => Promise<T>,
+      options: TransactionOptions = {},
+    ) {
       const connection = await pool.connect()
       try {
         await connection.query('BEGIN')
+        if (options.isolationLevel) {
+          await connection.query(
+            `SET TRANSACTION ISOLATION LEVEL ${options.isolationLevel}`,
+          )
+        }
         const result = await work(createClient(connection))
         await connection.query('COMMIT')
         return result
