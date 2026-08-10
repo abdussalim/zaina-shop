@@ -140,6 +140,24 @@ export const categoryInputSchema = z.object({
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
 })
 
+export const storeSettingsInputSchema = z.object({
+  storeName: z.string().trim().min(2).max(160),
+  address: optionalText(500),
+  phone: optionalText(40),
+  timezone: z.enum(['Asia/Jakarta', 'Asia/Makassar', 'Asia/Jayapura']),
+  defaultMinimumStock: z.number().min(0).max(1_000_000),
+})
+
+export const passwordChangeInputSchema = z
+  .object({
+    currentPassword: z.string().min(8).max(200),
+    newPassword: z.string().min(12).max(200),
+  })
+  .refine((input) => input.currentPassword !== input.newPassword, {
+    path: ['newPassword'],
+    message: 'Kata sandi baru harus berbeda dari kata sandi saat ini',
+  })
+
 export type ProductInput = z.infer<typeof productInputSchema>
 export type ProductUnitInput = z.infer<typeof productUnitInputSchema>
 export type StockMovementInput = z.infer<typeof stockMovementInputSchema>
@@ -147,3 +165,5 @@ export type SaleInput = z.infer<typeof saleInputSchema>
 export type LoginInput = z.infer<typeof loginInputSchema>
 export type CategoryInput = z.infer<typeof categoryInputSchema>
 export type MovementType = z.infer<typeof movementTypeSchema>
+export type StoreSettingsInput = z.infer<typeof storeSettingsInputSchema>
+export type PasswordChangeInput = z.infer<typeof passwordChangeInputSchema>

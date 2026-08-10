@@ -19,6 +19,8 @@ import { createInventoryService } from './modules/inventory/inventory.service.js
 import { createReportsRouter } from './modules/reports/reports.routes.js'
 import { createSalesRouter } from './modules/sales/sales.routes.js'
 import { createSalesService } from './modules/sales/sales.service.js'
+import { createSettingsRouter } from './modules/settings/settings.routes.js'
+import { createSettingsService } from './modules/settings/settings.service.js'
 
 export interface AppDependencies {
   config: AppConfig
@@ -58,6 +60,7 @@ export function createApp(dependencies: AppDependencies): Express {
   const catalogService = createCatalogService(database)
   const inventoryService = createInventoryService(database)
   const salesService = createSalesService(database, config.storeTimezone)
+  const settingsService = createSettingsService(database)
   app.get('/api/v1/health', async (_request, response) => {
     await database.query('SELECT 1')
     return sendData(response, { status: 'ok' })
@@ -67,6 +70,7 @@ export function createApp(dependencies: AppDependencies): Express {
   app.use('/api/v1', createInventoryRouter(inventoryService))
   app.use('/api/v1', createSalesRouter(salesService))
   app.use('/api/v1', createReportsRouter(database, config.storeTimezone))
+  app.use('/api/v1', createSettingsRouter(settingsService))
 
   app.use((_request, _response, next) => {
     next(new AppError(404, 'NOT_FOUND', 'Alamat API tidak ditemukan'))

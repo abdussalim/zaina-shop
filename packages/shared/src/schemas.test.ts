@@ -4,6 +4,7 @@ import {
   productInputSchema,
   saleInputSchema,
   stockMovementInputSchema,
+  storeSettingsInputSchema,
 } from './schemas.js'
 
 const validProduct = {
@@ -49,6 +50,20 @@ describe('productInputSchema', () => {
     })
 
     expect(result.success).toBe(false)
+  })
+})
+
+describe('storeSettingsInputSchema', () => {
+  it('accepts Indonesian store identity and a non-negative stock default', () => {
+    const parsed = storeSettingsInputSchema.parse({
+      storeName: 'Toko Zaina',
+      address: 'Jl. Trans Kalimantan',
+      phone: '081234567890',
+      timezone: 'Asia/Jakarta',
+      defaultMinimumStock: 5,
+    })
+
+    expect(parsed.storeName).toBe('Toko Zaina')
   })
 })
 
