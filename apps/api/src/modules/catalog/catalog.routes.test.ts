@@ -121,4 +121,20 @@ describe('catalog routes', () => {
       balanceBase: 0,
     })
   })
+
+  it('archives removed selling units without exposing them to new sales', async () => {
+    const created = await createProduct('UNIT-101')
+    const update = productInput('UNIT-101')
+    update.units = [update.units[0]!]
+
+    const response = await context.agent
+      .patch(`/api/v1/products/${created.body.data.id}`)
+      .set('Origin', testConfig.appOrigin)
+      .send(update)
+
+    expect(response.status).toBe(200)
+    expect(response.body.data.units.map((unit: { name: string }) => unit.name)).toEqual([
+      'buah',
+    ])
+  })
 })

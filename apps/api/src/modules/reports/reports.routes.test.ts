@@ -71,6 +71,26 @@ describe('dashboard and report routes', () => {
     expect(inventory.body.data.products).toEqual(expect.any(Array))
   })
 
+  it('uses the timezone saved in store settings for date filters', async () => {
+    await context.database.query(
+      `UPDATE store_settings SET timezone = 'America/Los_Angeles' WHERE id = 1`,
+    )
+    await context.database.query(
+      `UPDATE sales SET sold_at = '2026-01-01T00:30:00.000Z' WHERE status = 'COMPLETED'`,
+    )
+
+    const response = await context.agent.get(
+      '/api/v1/reports/sales?from=2025-12-31&to=2025-12-31',
+    )
+
+    expect(response.status).toBe(200)
+    expect(response.body.data.summary.transactionCount).toBe(1)
+
+    await context.database.query(
+      `UPDATE store_settings SET timezone = 'Asia/Jakarta' WHERE id = 1`,
+    )
+  })
+
   it('exports spreadsheet-safe CSV files', async () => {
     await context.database.query(
       `UPDATE products SET name = '=2+2' WHERE sku = 'PRG-001'`,

@@ -11,6 +11,7 @@ interface UnitRecord {
   factor: string | number
   sale_price: string | number
   is_default: boolean
+  is_active: boolean
 }
 
 export async function insertCategory(
@@ -97,7 +98,7 @@ async function replaceOrUpdateUnits(
   input: ProductInput,
 ): Promise<void> {
   const current = await database.query<UnitRecord>(
-    `SELECT id, product_id, name, factor, sale_price, is_default
+    `SELECT id, product_id, name, factor, sale_price, is_default, is_active
      FROM product_units WHERE product_id = $1`,
     [productId],
   )
@@ -105,7 +106,8 @@ async function replaceOrUpdateUnits(
     current.rows.map((unit) => [unit.name.toLocaleLowerCase('id-ID'), unit.id]),
   )
   await database.query(
-    'UPDATE product_units SET is_default = FALSE WHERE product_id = $1',
+    `UPDATE product_units SET is_default = FALSE, is_active = FALSE,
+       updated_at = CURRENT_TIMESTAMP WHERE product_id = $1`,
     [productId],
   )
 
@@ -115,6 +117,7 @@ async function replaceOrUpdateUnits(
       await database.query(
         `UPDATE product_units SET
            name = $3, factor = $4, sale_price = $5, is_default = $6,
+           is_active = TRUE,
            updated_at = CURRENT_TIMESTAMP
          WHERE id = $1 AND product_id = $2`,
         [

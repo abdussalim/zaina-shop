@@ -118,7 +118,7 @@ async function findUnits(database: Database, productIds: readonly string[]) {
   const result = await database.query<UnitRecord>(
     `SELECT id, product_id, name, factor, sale_price, is_default
      FROM product_units
-     WHERE product_id IN (${placeholders})
+     WHERE product_id IN (${placeholders}) AND is_active = TRUE
      ORDER BY factor, name`,
     productIds,
   )

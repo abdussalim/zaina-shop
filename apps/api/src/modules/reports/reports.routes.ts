@@ -4,6 +4,7 @@ import { z } from 'zod'
 import type { Database } from '../../db/database.js'
 import { sendData } from '../../http/respond.js'
 import { requireSession } from '../auth/auth.routes.js'
+import { findStoreTimezone } from '../settings/settings.repository.js'
 import { toCsv } from './csv.js'
 import {
   getDashboard,
@@ -18,13 +19,15 @@ export function createReportsRouter(database: Database, timezone: string): Route
   const router = Router()
   router.use(requireSession)
 
-  router.get('/dashboard', async (_request, response) =>
-    sendData(response, await getDashboard(database, timezone)),
-  )
+  router.get('/dashboard', async (_request, response) => {
+    const currentTimezone = await findStoreTimezone(database, timezone)
+    return sendData(response, await getDashboard(database, currentTimezone))
+  })
 
   router.get('/reports/sales', async (request, response) => {
     const filters = parseDateFilters(request.query)
-    const report = await getSalesReport(database, filters, timezone)
+    const currentTimezone = await findStoreTimezone(database, timezone)
+    const report = await getSalesReport(database, filters, currentTimezone)
     if (request.query.format === 'csv') return sendSalesCsv(response, report)
     return sendData(response, report)
   })

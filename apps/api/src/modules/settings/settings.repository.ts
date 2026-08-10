@@ -1,4 +1,4 @@
-import type { Database } from '../../db/database.js'
+import type { Database, DatabaseClient } from '../../db/database.js'
 import type { StoreSettingsInput } from '@zaina/shared'
 
 interface StoreSettingsRow {
@@ -16,6 +16,16 @@ export async function findStoreSettings(database: Database) {
   )
   const row = result.rows[0]
   return row ? mapStoreSettings(row) : undefined
+}
+
+export async function findStoreTimezone(
+  database: DatabaseClient,
+  fallback: string,
+): Promise<string> {
+  const result = await database.query<{ timezone: string }>(
+    'SELECT timezone FROM store_settings WHERE id = 1',
+  )
+  return result.rows[0]?.timezone ?? fallback
 }
 
 export async function updateStoreSettings(

@@ -72,7 +72,7 @@ export async function findSellingUnits(
   }>(
     `SELECT product_id, id AS unit_id, name AS unit_name, factor, sale_price
      FROM product_units
-     WHERE id IN (${placeholders})`,
+     WHERE id IN (${placeholders}) AND is_active = TRUE`,
     unitIds,
   )
   return result.rows.map((row) => ({

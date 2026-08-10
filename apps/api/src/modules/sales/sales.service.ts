@@ -4,6 +4,7 @@ import { calculateSaleTotals, toBaseQuantity, type SaleInput } from '@zaina/shar
 
 import type { Database } from '../../db/database.js'
 import { AppError } from '../../http/errors.js'
+import { findStoreTimezone } from '../settings/settings.repository.js'
 import { findSale, findSaleByIdempotencyKey, listSales } from './sales.queries.js'
 import {
   findCancellationLines,
@@ -63,9 +64,10 @@ export function createSalesService(database: Database, timezone: string) {
           }
 
           const id = randomUUID()
+          const currentTimezone = await findStoreTimezone(transaction, timezone)
           await insertSaleHeader(transaction, {
             id,
-            saleNumber: createSaleNumber(new Date(), timezone),
+            saleNumber: createSaleNumber(new Date(), currentTimezone),
             idempotencyKey: input.idempotencyKey,
             ...totals,
             amountPaid: input.amountPaid,

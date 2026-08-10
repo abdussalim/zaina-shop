@@ -168,4 +168,45 @@ describe('sales routes', () => {
     expect(detail.status).toBe(200)
     expect(detail.body.data.items).toEqual(expect.any(Array))
   })
+
+  it('uses the timezone saved in store settings for sale numbers', async () => {
+    const now = new Date()
+    const fallbackDate = dateStamp(now, 'Asia/Jakarta')
+    const timezone = ['Pacific/Honolulu', 'Pacific/Kiritimati'].find(
+      (candidate) => dateStamp(now, candidate) !== fallbackDate,
+    )!
+    const product = await createStockedProduct('SALE-TZ', 1)
+    await context.database.query('UPDATE store_settings SET timezone = $1 WHERE id = 1', [
+      timezone,
+    ])
+
+    const response = await context.agent
+      .post('/api/v1/sales')
+      .set('Origin', testConfig.appOrigin)
+      .send({
+        idempotencyKey: randomUUID(),
+        discount: 0,
+        amountPaid: 115_000,
+        items: [{ productId: product.id, unitId: product.dozen.id, quantity: 1 }],
+      })
+
+    await context.database.query(
+      `UPDATE store_settings SET timezone = 'Asia/Jakarta' WHERE id = 1`,
+    )
+    expect(response.status).toBe(201)
+    expect(response.body.data.saleNumber).toMatch(
+      new RegExp(`^PJ-${dateStamp(now, timezone)}-`),
+    )
+  })
 })
+
+function dateStamp(date: Date, timezone: string): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+    .format(date)
+    .replaceAll('-', '')
+}
