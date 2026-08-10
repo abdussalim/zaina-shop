@@ -29,4 +29,16 @@ describe('loadConfig', () => {
       loadConfig({ ...validEnvironment, SESSION_SECRET: 'too-short' }),
     ).toThrow('Konfigurasi environment tidak valid')
   })
+
+  it('requires an HTTPS public origin in production', () => {
+    expect(() =>
+      loadConfig({ ...validEnvironment, NODE_ENV: 'production' }),
+    ).toThrow('Konfigurasi environment tidak valid')
+  })
+
+  it('rejects unsupported store timezones', () => {
+    expect(() =>
+      loadConfig({ ...validEnvironment, STORE_TIMEZONE: 'Etc/Unknown' }),
+    ).toThrow('Konfigurasi environment tidak valid')
+  })
 })

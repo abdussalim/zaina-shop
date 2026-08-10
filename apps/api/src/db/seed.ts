@@ -31,8 +31,7 @@ async function seedAdmin(
   config: SeedConfig,
 ): Promise<string> {
   const existing = await database.query<{ id: string }>(
-    'SELECT id FROM users WHERE LOWER(username) = LOWER($1)',
-    [config.adminUsername],
+    'SELECT id FROM users ORDER BY created_at, id LIMIT 1',
   )
   const existingId = existing.rows[0]?.id
   if (existingId) return existingId
@@ -56,10 +55,7 @@ async function seedStoreSettings(
   await database.query(
     `INSERT INTO store_settings (id, store_name, timezone)
      VALUES (1, $1, $2)
-     ON CONFLICT (id) DO UPDATE SET
-       store_name = EXCLUDED.store_name,
-       timezone = EXCLUDED.timezone,
-       updated_at = CURRENT_TIMESTAMP`,
+     ON CONFLICT (id) DO NOTHING`,
     [config.storeName, config.storeTimezone],
   )
 }

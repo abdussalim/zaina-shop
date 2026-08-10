@@ -1,0 +1,80 @@
+name: toko-zaina
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  database:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-zaina}
+      POSTGRES_USER: ${POSTGRES_USER:-zaina}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD wajib diisi}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    logging: *default-logging
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    init: true
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,noexec,nosuid
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      APP_ORIGIN: ${APP_ORIGIN:?APP_ORIGIN HTTPS wajib diisi}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-zaina}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB:-zaina}
+      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET wajib diisi}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-toko}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD awal wajib diisi}
+      STORE_NAME: ${STORE_NAME:-Toko Zaina}
+      STORE_TIMEZONE: ${STORE_TIMEZONE:-Asia/Jakarta}
+      SEED_DEMO_DATA: "false"
+    depends_on:
+      database:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/v1/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    logging: *default-logging
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "127.0.0.1:${APP_PORT:-8080}:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/healthz | grep -q '^ok'"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    logging: *default-logging
+
+volumes:
+  postgres_data:

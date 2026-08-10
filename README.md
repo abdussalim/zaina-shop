@@ -1,0 +1,76 @@
+# Inventaris Toko Zaina
+
+Aplikasi inventaris dan kasir sederhana untuk toko perabotan rumah serta pecah belah. Satu akun toko dapat digunakan dari HP dan laptop, dengan saldo stok yang selalu dihitung dalam satuan dasar dan riwayat mutasi yang tidak ditimpa.
+
+## Fitur
+
+- Dashboard omzet, laba kotor, nilai persediaan, stok tipis, dan aktivitas terbaru.
+- Katalog barang dengan kategori, SKU/barcode, lokasi rak, harga modal/jual, serta stok minimum.
+- Multi-satuan, misalnya `1 lusin = 12 buah`, dengan harga jual per kemasan.
+- Ledger stok untuk stok awal, penerimaan, kerusakan/pecah, retur, dan penyesuaian.
+- Kasir, kembalian, cetak nota, pembatalan transaksi, dan perlindungan retry agar transaksi tidak ganda.
+- Laporan penjualan/persediaan dan ekspor CSV yang aman dibuka di spreadsheet.
+- Pengaturan identitas toko, zona waktu WIB/WITA/WIT, batas stok default, dan kata sandi.
+- Docker Compose PostgreSQL 18, healthcheck, backup/restore, dan smoke test end-to-end.
+
+## Menjalankan cepat dengan Docker
+
+Persyaratan: Docker Engine dengan plugin Compose.
+
+```bash
+docker compose up --build -d
+docker compose ps
+```
+
+Buka `http://localhost:8080`. Konfigurasi lokal bawaan membuat akun `toko` dengan kata sandi `ganti-kata-sandi-lokal` dan tiga barang demo. Ganti kata sandi segera bila stack dapat diakses perangkat lain.
+
+Untuk menghentikan aplikasi tanpa menghapus data:
+
+```bash
+docker compose down
+```
+
+Jangan menambahkan `-v` pada perintah tersebut kecuali memang ingin menghapus volume database.
+
+## Menjalankan untuk pengembangan
+
+Persyaratan: Node.js 24+, npm 11+, dan PostgreSQL 18.
+
+1. Salin `.env.example` menjadi `.env`.
+2. Ubah `APP_ORIGIN` menjadi `http://localhost:8080`, sesuaikan `DATABASE_URL`, dan gunakan rahasia lokal.
+3. Muat variabel `.env` ke terminal, lalu jalankan:
+
+```bash
+npm ci
+npm run dev
+```
+
+Di PowerShell, variabel dapat dimuat satu per satu dengan `$env:NAMA='nilai'`. Alternatif paling mudah untuk menjalankan seluruh stack lokal tetap `docker compose up --build` karena Compose sudah memiliki default pengembangan.
+
+## Pemeriksaan kualitas
+
+```bash
+npm test
+npm run lint
+npm run typecheck
+npm run build
+node scripts/smoke-test.mjs --help
+```
+
+Setelah stack hidup, jalankan smoke test dengan kredensial yang benar:
+
+```bash
+SMOKE_USERNAME=toko SMOKE_PASSWORD='kata-sandi-anda' \
+  node scripts/smoke-test.mjs --base-url http://localhost:8080
+```
+
+Smoke test membuat barang uji unik, menerima satu lusin, menjual dua buah, membatalkan transaksi, memastikan saldo kembali, lalu mengarsipkan barang uji.
+
+## Deployment dan operasional
+
+- [Deployment VPS](docs/DEPLOYMENT.md)
+- [Backup dan restore](docs/BACKUP_RESTORE.md)
+- [Panduan operasi](docs/OPERATIONS.md)
+- [Model database](docs/DATABASE.md)
+
+Rahasia dan file backup diabaikan Git. Jangan commit `.env`, dump database, atau sertifikat TLS.

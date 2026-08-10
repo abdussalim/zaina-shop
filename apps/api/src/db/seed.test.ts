@@ -53,6 +53,31 @@ describe('seedDatabase', () => {
     expect(categories.rows[0]?.count).toBe('4')
   })
 
+  it('preserves account and store changes across application restarts', async () => {
+    await seedDatabase(database, seedConfig)
+    await database.query(
+      `UPDATE store_settings SET store_name = 'Rumah Bening', timezone = 'Asia/Makassar'
+       WHERE id = 1`,
+    )
+
+    await seedDatabase(database, {
+      ...seedConfig,
+      adminUsername: 'pemilik-baru',
+      storeName: 'Nama dari environment',
+      storeTimezone: 'Asia/Jayapura',
+    })
+
+    const users = await database.query<{ username: string }>('SELECT username FROM users')
+    const settings = await database.query<{ store_name: string; timezone: string }>(
+      'SELECT store_name, timezone FROM store_settings WHERE id = 1',
+    )
+    expect(users.rows).toEqual([{ username: 'toko' }])
+    expect(settings.rows[0]).toEqual({
+      store_name: 'Rumah Bening',
+      timezone: 'Asia/Makassar',
+    })
+  })
+
   it('adds useful demonstration inventory only when explicitly enabled', async () => {
     await seedDatabase(database, { ...seedConfig, seedDemoData: true })
 

@@ -12,21 +12,36 @@ export interface AppConfig {
   isProduction: boolean
 }
 
-const environmentSchema = z.object({
-  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  PORT: z.coerce.number().int().min(1).max(65_535).default(3000),
-  APP_ORIGIN: z.url(),
-  DATABASE_URL: z.string().min(1),
-  SESSION_SECRET: z.string().min(32),
-  ADMIN_USERNAME: z.string().trim().min(1).max(80),
-  ADMIN_PASSWORD: z.string().min(12).max(200),
-  STORE_NAME: z.string().trim().min(2).max(160),
-  STORE_TIMEZONE: z.string().trim().min(1).max(80).default('Asia/Jakarta'),
-  SEED_DEMO_DATA: z
-    .enum(['true', 'false'])
-    .default('false')
-    .transform((value) => value === 'true'),
-})
+const environmentSchema = z
+  .object({
+    NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+    PORT: z.coerce.number().int().min(1).max(65_535).default(3000),
+    APP_ORIGIN: z.url(),
+    DATABASE_URL: z.string().min(1),
+    SESSION_SECRET: z.string().min(32),
+    ADMIN_USERNAME: z.string().trim().min(1).max(80),
+    ADMIN_PASSWORD: z.string().min(12).max(200),
+    STORE_NAME: z.string().trim().min(2).max(160),
+    STORE_TIMEZONE: z
+      .enum(['Asia/Jakarta', 'Asia/Makassar', 'Asia/Jayapura'])
+      .default('Asia/Jakarta'),
+    SEED_DEMO_DATA: z
+      .enum(['true', 'false'])
+      .default('false')
+      .transform((value) => value === 'true'),
+  })
+  .superRefine((environment, context) => {
+    if (
+      environment.NODE_ENV === 'production' &&
+      new URL(environment.APP_ORIGIN).protocol !== 'https:'
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['APP_ORIGIN'],
+        message: 'APP_ORIGIN produksi harus memakai HTTPS',
+      })
+    }
+  })
 
 export function loadConfig(environment: NodeJS.ProcessEnv): AppConfig {
   const result = environmentSchema.safeParse(environment)
