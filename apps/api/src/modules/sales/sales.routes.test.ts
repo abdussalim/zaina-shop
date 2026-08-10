@@ -19,7 +19,7 @@ describe('sales routes', () => {
   })
 
   afterAll(async () => {
-    await context.close()
+    await context?.close()
   })
 
   async function createStockedProduct(sku: string, dozens: number) {

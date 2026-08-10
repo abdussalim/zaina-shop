@@ -19,7 +19,7 @@ describe('inventory routes', () => {
   })
 
   afterAll(async () => {
-    await context.close()
+    await context?.close()
   })
 
   async function createProduct(sku: string) {

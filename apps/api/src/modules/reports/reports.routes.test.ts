@@ -31,7 +31,7 @@ describe('dashboard and report routes', () => {
   })
 
   afterAll(async () => {
-    await context.close()
+    await context?.close()
   })
 
   it('returns operational dashboard cards and activity lists', async () => {

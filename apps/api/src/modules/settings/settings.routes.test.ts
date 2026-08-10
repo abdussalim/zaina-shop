@@ -12,7 +12,7 @@ describe('settings routes', () => {
   })
 
   afterAll(async () => {
-    await context.close()
+    await context?.close()
   })
 
   it('reads and updates the singleton store identity', async () => {

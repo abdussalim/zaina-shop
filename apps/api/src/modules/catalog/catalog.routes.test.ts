@@ -17,7 +17,7 @@ describe('catalog routes', () => {
   })
 
   afterAll(async () => {
-    await context.close()
+    await context?.close()
   })
 
   function productInput(sku: string, name = 'Piring Kaca Bening') {
