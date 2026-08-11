@@ -23,9 +23,15 @@ describe('dashboard and report routes', () => {
       .set('Origin', testConfig.appOrigin)
       .send({
         idempotencyKey: randomUUID(),
-        discount: 1_000,
         amountPaid: 20_000,
-        items: [{ productId: row.id, unitId: row.unit_id, quantity: 2 }],
+        items: [
+          {
+            productId: row.id,
+            unitId: row.unit_id,
+            quantity: 2,
+            discountValue: 5,
+          },
+        ],
       })
     expect(sale.status).toBe(201)
   })
@@ -65,6 +71,9 @@ describe('dashboard and report routes', () => {
     expect(sales.body.data.topProducts[0]).toMatchObject({
       productName: 'Piring Kaca Bening',
       quantityBase: 2,
+      revenue: 19_000,
+      cost: 14_000,
+      grossProfit: 5_000,
     })
     expect(inventory.status).toBe(200)
     expect(inventory.body.data.summary.inventoryValue).toBeGreaterThan(0)

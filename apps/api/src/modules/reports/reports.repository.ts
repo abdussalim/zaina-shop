@@ -147,7 +147,7 @@ async function getSalesReportSnapshot(
   }>(
     `SELECT si.product_id, si.product_name,
             SUM(si.quantity_base) AS quantity_base,
-            SUM(si.subtotal) AS revenue,
+            SUM(si.total) AS revenue,
             SUM(si.quantity_base * si.cost_price) AS cost
      FROM sale_items si JOIN sales s ON s.id = si.sale_id
      WHERE ${aggregateFilter.sql}
