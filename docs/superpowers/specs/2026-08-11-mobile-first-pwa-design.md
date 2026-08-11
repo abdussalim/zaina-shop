@@ -1,7 +1,7 @@
 # Desain Mobile-First dan PWA Toko Zaina
 
 **Tanggal:** 11 Agustus 2026
-**Status:** Desain disetujui; menunggu review spesifikasi tertulis
+**Status:** Desain disetujui; implementasi dimulai
 
 ## Tujuan
 
