@@ -4,13 +4,14 @@ import { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { calculateSaleLineTotals, getDiscountValidationMessage } from '@zaina/shared'
 
-import { apiRequest, ApiClientError, jsonBody } from '../../api/client.js'
+import { apiRequest, ApiClientError, assertOnlineWrite, jsonBody, OfflineWriteError } from '../../api/client.js'
 import type { Product, ProductUnit, Sale } from '../../api/types.js'
 import { Button } from '../../components/ui/Button.js'
 import { PageHeader } from '../../components/ui/PageHeader.js'
 import { EmptyState, LoadingState } from '../../components/ui/States.js'
 import { StatusBadge } from '../../components/ui/StatusBadge.js'
 import { formatCurrency, formatDiscountRange, formatQuantity, getStockLabel, getStockTone } from '../../lib/format.js'
+import { useConnectivity } from '../../app/ConnectivityContext.js'
 
 interface CartLine {
   product: Product
@@ -22,6 +23,7 @@ interface CartLine {
 export function SalesPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { isOffline, canWrite } = useConnectivity()
   const [search, setSearch] = useState('')
   const [cart, setCart] = useState<CartLine[]>([])
   const [amountPaid, setAmountPaid] = useState(0)
@@ -31,6 +33,7 @@ export function SalesPage() {
   const products = useQuery({
     queryKey: ['products', 'sales'],
     queryFn: () => apiRequest<Product[]>('/api/v1/products'),
+    enabled: !isOffline,
   })
 
   const visibleProducts = useMemo(() => {
@@ -50,6 +53,7 @@ export function SalesPage() {
 
   const checkout = useMutation({
     mutationFn: () => {
+      assertOnlineWrite(canWrite)
       const transaction = {
         amountPaid,
         note,
@@ -84,9 +88,7 @@ export function SalesPage() {
       navigate(`/sales/${sale.id}`)
     },
     onError: (error) => {
-      setCheckoutError(
-        error instanceof ApiClientError ? error.message : 'Penjualan belum dapat disimpan.',
-      )
+      setCheckoutError(error instanceof ApiClientError || error instanceof OfflineWriteError ? error.message : 'Penjualan belum dapat disimpan.')
     },
   })
 
@@ -127,6 +129,7 @@ export function SalesPage() {
     validPayment &&
     amountPaid >= total &&
     stockEnough &&
+    canWrite &&
     !checkout.isPending
 
   return (
@@ -136,6 +139,7 @@ export function SalesPage() {
         title="Penjualan baru"
         description="Pilih barang dari rak digital, tentukan satuan, lalu selesaikan pembayaran."
       />
+      {isOffline ? <div className="offline-banner" role="status">Offline. Keranjang tetap di layar, tetapi checkout membutuhkan koneksi server.</div> : null}
       <div className="sales-workspace">
         <section className="sales-catalog">
           <div className="catalog-search">
@@ -272,6 +276,7 @@ export function SalesPage() {
             size="large"
             pending={checkout.isPending}
             disabled={!canCheckout}
+            disabledReason={!canWrite ? 'Sambungkan koneksi untuk menyelesaikan penjualan' : undefined}
             onClick={() => {
               setCheckoutError(undefined)
               checkout.mutate()

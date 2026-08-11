@@ -3,7 +3,7 @@ import { ArrowLeft, Ban, Printer, ShoppingBasket } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
-import { apiRequest, ApiClientError, jsonBody } from '../../api/client.js'
+import { apiRequest, ApiClientError, assertOnlineWrite, jsonBody } from '../../api/client.js'
 import type { Sale, SaleItem } from '../../api/types.js'
 import { Button } from '../../components/ui/Button.js'
 import { Modal } from '../../components/ui/Modal.js'
@@ -11,16 +11,19 @@ import { EmptyState, LoadingState } from '../../components/ui/States.js'
 import { StatusBadge } from '../../components/ui/StatusBadge.js'
 import { formatCurrency, formatDateTime, formatQuantity } from '../../lib/format.js'
 import { useStoreSettings } from '../../app/StoreSettingsContext.js'
+import { useConnectivity } from '../../app/ConnectivityContext.js'
+import { OfflineState } from '../../components/ui/States.js'
 
 export function SaleReceipt() {
   const storeSettings = useStoreSettings()
+  const { isOffline, canWrite } = useConnectivity()
   const { id = '' } = useParams()
   const queryClient = useQueryClient()
   const [cancelOpen, setCancelOpen] = useState(false)
   const [reason, setReason] = useState('')
-  const sale = useQuery({ queryKey: ['sales', id], queryFn: () => apiRequest<Sale>(`/api/v1/sales/${id}`), enabled: Boolean(id) })
+  const sale = useQuery({ queryKey: ['sales', id], queryFn: () => apiRequest<Sale>(`/api/v1/sales/${id}`), enabled: Boolean(id) && !isOffline })
   const cancellation = useMutation({
-    mutationFn: () => apiRequest<Sale>(`/api/v1/sales/${id}/cancel`, { method: 'POST', ...jsonBody({ reason }) }),
+    mutationFn: () => { assertOnlineWrite(canWrite); return apiRequest<Sale>(`/api/v1/sales/${id}/cancel`, { method: 'POST', ...jsonBody({ reason }) }) },
     onSuccess: async () => {
       setCancelOpen(false)
       await Promise.all([
@@ -33,6 +36,7 @@ export function SaleReceipt() {
     },
   })
 
+  if (isOffline) return <OfflineState title="Nota membutuhkan koneksi" description="Nota dan riwayat penjualan tidak disimpan sebagai cache bisnis offline." />
   if (sale.isPending) return <LoadingState label="Membuka bukti penjualan" />
   if (sale.isError) return <EmptyState title="Bukti penjualan tidak ditemukan" description="Periksa nomor atau kembali ke dashboard." />
   const receipt = sale.data
@@ -41,7 +45,7 @@ export function SaleReceipt() {
       <div className="detail-topbar no-print">
         <Link className="back-link" to="/sales/new"><ArrowLeft /> Kembali ke kasir</Link>
         <div className="page-header__actions">
-          {receipt.status === 'COMPLETED' ? <Button variant="ghost" icon={<Ban />} onClick={() => setCancelOpen(true)}>Batalkan penjualan</Button> : null}
+          {receipt.status === 'COMPLETED' ? <Button variant="ghost" icon={<Ban />} disabled={!canWrite} disabledReason="Sambungkan koneksi untuk membatalkan penjualan" onClick={() => setCancelOpen(true)}>Batalkan penjualan</Button> : null}
           <Button variant="secondary" icon={<Printer />} onClick={() => window.print()}>Cetak bukti</Button>
           <Link className="button button--primary button--medium" to="/sales/new"><ShoppingBasket /> Penjualan baru</Link>
         </div>
@@ -83,7 +87,7 @@ export function SaleReceipt() {
         <form className="form-stack" onSubmit={(event) => { event.preventDefault(); cancellation.mutate() }}>
           <label className="form-field"><span>Alasan pembatalan</span><textarea rows={3} minLength={3} required value={reason} onChange={(event) => setReason(event.target.value)} /></label>
           {cancellation.error ? <div className="form-alert" role="alert">{cancellation.error instanceof ApiClientError ? cancellation.error.message : 'Penjualan belum dapat dibatalkan.'}</div> : null}
-          <div className="form-actions"><Button type="button" variant="ghost" onClick={() => setCancelOpen(false)}>Kembali</Button><Button type="submit" variant="danger" pending={cancellation.isPending} disabled={reason.trim().length < 3}>Ya, batalkan</Button></div>
+          <div className="form-actions"><Button type="button" variant="ghost" onClick={() => setCancelOpen(false)}>Kembali</Button><Button type="submit" variant="danger" pending={cancellation.isPending} disabled={reason.trim().length < 3 || !canWrite} disabledReason="Sambungkan koneksi untuk membatalkan penjualan">Ya, batalkan</Button></div>
         </form>
       </Modal>
     </div>

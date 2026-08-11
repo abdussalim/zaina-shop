@@ -19,6 +19,19 @@ export function isApiClientError(error: unknown): error is ApiClientError {
   return error instanceof ApiClientError
 }
 
+export class OfflineWriteError extends Error {
+  readonly code = 'OFFLINE_WRITE'
+
+  constructor(message = 'Sambungkan koneksi untuk menyimpan perubahan di server.') {
+    super(message)
+    this.name = 'OfflineWriteError'
+  }
+}
+
+export function assertOnlineWrite(canWrite: boolean): asserts canWrite {
+  if (!canWrite) throw new OfflineWriteError()
+}
+
 export async function apiRequest<T>(
   path: string,
   options: RequestInit = {},
