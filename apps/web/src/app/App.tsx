@@ -98,7 +98,7 @@ function RoutedApp() {
           />
         }
       >
-        <Route index element={<OfflineBoundary allowOffline={false}><DashboardPage /></OfflineBoundary>} />
+        <Route index element={<OfflineBoundary allowOffline><DashboardPage /></OfflineBoundary>} />
         <Route path="products" element={<OfflineBoundary allowOffline><ProductsPage /></OfflineBoundary>} />
         <Route path="products/:id" element={<OfflineBoundary allowOffline><ProductDetailPage /></OfflineBoundary>} />
         <Route path="sales/new" element={<OfflineBoundary allowOffline={false}><SalesPage /></OfflineBoundary>} />

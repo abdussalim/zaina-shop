@@ -18,13 +18,24 @@ import { EmptyState, LoadingState } from '../../components/ui/States.js'
 import { StatusBadge } from '../../components/ui/StatusBadge.js'
 import { formatCurrency, formatDateTime, formatQuantity, movementLabels } from '../../lib/format.js'
 import { useStoreSettings } from '../../app/StoreSettingsContext.js'
+import { useConnectivity } from '../../app/ConnectivityContext.js'
+import { useEffect, useState } from 'react'
+import type { InventorySnapshot } from '../../pwa/types.js'
 
 export function DashboardPage() {
   const storeSettings = useStoreSettings()
+  const { isOffline, readSnapshot, lastSnapshotAt } = useConnectivity()
+  const [snapshot, setSnapshot] = useState<InventorySnapshot | null>(null)
+  useEffect(() => {
+    if (isOffline) void readSnapshot().then(setSnapshot)
+  }, [isOffline, readSnapshot])
   const dashboard = useQuery({
     queryKey: ['dashboard'],
     queryFn: () => apiRequest<DashboardData>('/api/v1/dashboard'),
+    enabled: !isOffline,
   })
+
+  if (isOffline) return <OfflineDashboard snapshot={snapshot} updatedAt={lastSnapshotAt} />
 
   if (dashboard.isPending) return <LoadingState label="Menyusun ringkasan toko" />
   if (dashboard.isError) {
@@ -140,6 +151,29 @@ export function DashboardPage() {
           ) : <div className="inline-empty">Belum ada pergerakan stok.</div>}
         </section>
       </div>
+    </div>
+  )
+}
+
+function OfflineDashboard({ snapshot, updatedAt }: { snapshot: InventorySnapshot | null; updatedAt: string | null }) {
+  const products = snapshot?.products ?? []
+  const attention = products.filter((product) => product.stockStatus !== 'OK')
+  return (
+    <div className="page-stack dashboard-page">
+      <PageHeader
+        eyebrow="Mode offline"
+        title="Stok terakhir tersimpan"
+        description="Ringkasan keuangan, laporan, dan aksi tulis disembunyikan saat offline. Data ini mungkin usang."
+      />
+      <div className="offline-banner" role="status">Snapshot katalog dan saldo stok {updatedAt ? `diperbarui ${new Date(updatedAt).toLocaleString('id-ID')}` : 'belum tersedia'}.</div>
+      <section className="metric-rail" aria-label="Ringkasan stok offline">
+        <Metric label="Barang tersimpan" value={formatQuantity(products.length)} icon={Boxes} />
+        <Metric label="Stok perlu cek" value={formatQuantity(attention.length)} icon={TriangleAlert} />
+      </section>
+      <section className="shelf-section">
+        <div className="section-heading"><div><p className="eyebrow">Baca saja</p><h2>Stok di batas rak</h2></div><StatusBadge tone={attention.length ? 'warning' : 'success'}>{attention.length} barang</StatusBadge></div>
+        {attention.length ? <div className="stock-rail-list">{attention.map((product) => <Link to={`/products/${product.id}`} className="stock-rail" key={product.id}><span className={`stock-rail__marker ${product.stockStatus === 'OUT_OF_STOCK' ? 'stock-rail__marker--danger' : ''}`} /><span className="stock-rail__identity"><small>{product.sku}</small><strong>{product.name}</strong></span><span className="stock-rail__quantity"><strong>{formatQuantity(product.balance)}</strong><small>{product.baseUnit}</small></span></Link>)}</div> : <div className="inline-empty"><Sparkles aria-hidden="true" /> Semua stok snapshot berada di atas batas minimum.</div>}
+      </section>
     </div>
   )
 }

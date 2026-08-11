@@ -17,6 +17,18 @@ export interface ConnectivityContextValue {
 
 const ConnectivityContext = createContext<ConnectivityContextValue | null>(null)
 
+const fallbackConnectivity: ConnectivityContextValue = {
+  status: 'online',
+  isOffline: false,
+  canWrite: true,
+  lastSnapshotAt: null,
+  refreshSnapshot: async () => undefined,
+  clearSnapshot: async () => undefined,
+  snapshotStore: null,
+  readSnapshot: async () => null,
+  writeSnapshot: async () => undefined,
+}
+
 export function ConnectivityProvider({
   storeKey,
   children,
@@ -96,6 +108,5 @@ export function ConnectivityProvider({
 
 export function useConnectivity() {
   const value = useContext(ConnectivityContext)
-  if (!value) throw new Error('useConnectivity harus dipakai di dalam ConnectivityProvider')
-  return value
+  return value ?? fallbackConnectivity
 }
