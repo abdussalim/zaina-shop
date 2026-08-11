@@ -9,6 +9,9 @@ export default defineConfig({
       '/api': 'http://localhost:3000',
     },
   },
+  build: {
+    modulePreload: false,
+  },
   test: {
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',

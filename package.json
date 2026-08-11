@@ -19,7 +19,9 @@
     "dev:web": "npm run dev --workspace @zaina/web",
     "test": "npm run build --workspace @zaina/shared && npm run test --workspace @zaina/shared && npm run test --workspace @zaina/api && npm run test --workspace @zaina/web",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "lint": "oxlint --deny-warnings --react-plugin --vitest-plugin --jsx-a11y-plugin --import-plugin ."
+    "lint": "oxlint --deny-warnings --react-plugin --vitest-plugin --jsx-a11y-plugin --import-plugin .",
+    "budget:web": "npm run build --workspace @zaina/web",
+    "budget:web:check": "node scripts/check-web-budget.mjs apps/web/dist"
   },
   "devDependencies": {
     "concurrently": "latest",
