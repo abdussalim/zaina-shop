@@ -36,6 +36,9 @@ export interface ProductUnitRow {
   factor: string
   sale_price: string
   is_default: boolean
+  discount_type: 'PERCENTAGE' | 'FIXED'
+  minimum_discount: string
+  maximum_discount: string
 }
 
 export interface InventoryBalanceRow {

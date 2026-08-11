@@ -87,8 +87,33 @@ describe('seedDatabase', () => {
     const balances = await database.query<{ total: string }>(
       'SELECT SUM(quantity_base)::text AS total FROM inventory_balances',
     )
+    const units = await database.query<{
+      name: string
+      discount_type: string
+      minimum_discount: string | number
+      maximum_discount: string | number
+    }>(
+      `SELECT name, discount_type, minimum_discount, maximum_discount
+       FROM product_units
+       WHERE product_id = '20000000-0000-4000-8000-000000000001'
+       ORDER BY factor`,
+    )
 
     expect(products.rows[0]?.count).toBe('3')
     expect(balances.rows[0]?.total).toBe('66.000')
+    expect(units.rows).toEqual([
+      expect.objectContaining({
+        name: 'buah',
+        discount_type: 'PERCENTAGE',
+        minimum_discount: '5.000',
+        maximum_discount: '20.000',
+      }),
+      expect.objectContaining({
+        name: 'lusin',
+        discount_type: 'FIXED',
+        minimum_discount: '5000.000',
+        maximum_discount: '10000.000',
+      }),
+    ])
   })
 })

@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 
+import type { DiscountType } from '@zaina/shared'
 import argon2 from 'argon2'
 
 import type { Database, DatabaseClient } from './database.js'
@@ -95,6 +96,9 @@ interface DemoProduct {
     factor: number
     salePrice: number
     isDefault: boolean
+    discountType: DiscountType
+    minimumDiscount: number
+    maximumDiscount: number
   }[]
 }
 
@@ -117,6 +121,9 @@ const demoProducts: readonly DemoProduct[] = [
         factor: 1,
         salePrice: 10_000,
         isDefault: true,
+        discountType: 'PERCENTAGE',
+        minimumDiscount: 5,
+        maximumDiscount: 20,
       },
       {
         id: '30000000-0000-4000-8000-000000000002',
@@ -124,6 +131,9 @@ const demoProducts: readonly DemoProduct[] = [
         factor: 12,
         salePrice: 115_000,
         isDefault: false,
+        discountType: 'FIXED',
+        minimumDiscount: 5_000,
+        maximumDiscount: 10_000,
       },
     ],
   },
@@ -145,6 +155,9 @@ const demoProducts: readonly DemoProduct[] = [
         factor: 1,
         salePrice: 12_000,
         isDefault: true,
+        discountType: 'PERCENTAGE',
+        minimumDiscount: 5,
+        maximumDiscount: 15,
       },
       {
         id: '30000000-0000-4000-8000-000000000004',
@@ -152,6 +165,9 @@ const demoProducts: readonly DemoProduct[] = [
         factor: 6,
         salePrice: 68_000,
         isDefault: false,
+        discountType: 'FIXED',
+        minimumDiscount: 2_000,
+        maximumDiscount: 5_000,
       },
     ],
   },
@@ -173,6 +189,9 @@ const demoProducts: readonly DemoProduct[] = [
         factor: 1,
         salePrice: 89_000,
         isDefault: true,
+        discountType: 'PERCENTAGE',
+        minimumDiscount: 5,
+        maximumDiscount: 10,
       },
     ],
   },
@@ -205,8 +224,9 @@ async function seedDemoInventory(
     for (const unit of product.units) {
       await database.query(
         `INSERT INTO product_units (
-           id, product_id, name, factor, sale_price, is_default
-         ) VALUES ($1, $2, $3, $4, $5, $6)
+           id, product_id, name, factor, sale_price, is_default,
+           discount_type, minimum_discount, maximum_discount
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
          ON CONFLICT (id) DO NOTHING`,
         [
           unit.id,
@@ -215,6 +235,9 @@ async function seedDemoInventory(
           unit.factor,
           unit.salePrice,
           unit.isDefault,
+          unit.discountType,
+          unit.minimumDiscount,
+          unit.maximumDiscount,
         ],
       )
     }
