@@ -1,12 +1,13 @@
 import {
-  BarChart3,
   Boxes,
   CircleUserRound,
   LayoutDashboard,
   LogOut,
+  MoreHorizontal,
   PackageSearch,
-  Settings,
   ShoppingBasket,
+  Settings,
+  BarChart3,
 } from 'lucide-react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { Suspense } from 'react'
@@ -16,14 +17,16 @@ import type { StoreSettings } from '../api/types.js'
 import type { AuthenticatedUser } from '../features/auth/LoginPage.js'
 import { LoadingState } from '../components/ui/States.js'
 import { StoreSettingsProvider } from './StoreSettingsContext.js'
+import { ConnectivityProvider, useConnectivity } from './ConnectivityContext.js'
+import { OfflineBanner } from './OfflineBanner.js'
 
 const navigation = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/products', label: 'Barang', icon: PackageSearch },
   { to: '/sales/new', label: 'Jual', icon: ShoppingBasket, featured: true },
   { to: '/inventory', label: 'Stok', icon: Boxes },
-  { to: '/reports', label: 'Laporan', mobileLabel: 'Lainnya', icon: BarChart3 },
-  { to: '/settings', label: 'Pengaturan', icon: Settings, desktopOnly: true },
+  { to: '/reports', label: 'Laporan', icon: BarChart3, desktopOnly: true },
+  { to: '/settings', label: 'Pengaturan', mobileLabel: 'Lainnya', icon: MoreHorizontal },
 ]
 
 export function AppShell({
@@ -35,13 +38,35 @@ export function AppShell({
   storeSettings: StoreSettings
   onLoggedOut: () => void
 }) {
+  return (
+    <ConnectivityProvider storeKey={user.id}>
+      <StoreSettingsProvider settings={storeSettings}>
+        <ShellContent user={user} storeSettings={storeSettings} onLoggedOut={onLoggedOut} />
+      </StoreSettingsProvider>
+    </ConnectivityProvider>
+  )
+}
+
+function ShellContent({
+  user,
+  storeSettings,
+  onLoggedOut,
+}: {
+  user: AuthenticatedUser
+  storeSettings: StoreSettings
+  onLoggedOut: () => void
+}) {
+  const { status, clearSnapshot } = useConnectivity()
   async function logout() {
-    await apiRequest('/api/v1/auth/logout', { method: 'POST' })
-    onLoggedOut()
+    try {
+      await apiRequest('/api/v1/auth/logout', { method: 'POST' })
+    } finally {
+      await clearSnapshot()
+      onLoggedOut()
+    }
   }
 
   return (
-    <StoreSettingsProvider settings={storeSettings}>
       <div className="app-shell">
       <aside className="sidebar">
         <div className="brand-lockup">
@@ -76,14 +101,15 @@ export function AppShell({
             <span className="brand-seal" aria-hidden="true"><span>Z</span></span>
             <span><strong>{storeSettings.storeName}</strong><small>Inventaris toko</small></span>
           </div>
-          <span className="connection-pill"><i /> Tersambung</span>
+          <span className={`connection-pill ${status === 'offline' ? 'connection-pill--offline' : ''}`}><i /> {status === 'offline' ? 'Offline' : status === 'checking' ? 'Memeriksa' : 'Tersambung'}</span>
         </header>
         <div className="top-status" aria-hidden="true">
           <span>Inventaris satu toko</span>
           <span className="top-status__line" />
-          <span className="connection-pill"><i /> Server tersambung</span>
+          <span className={`connection-pill ${status === 'offline' ? 'connection-pill--offline' : ''}`}><i /> {status === 'offline' ? 'Server offline' : 'Server tersambung'}</span>
         </div>
         <div className="page-container">
+          <OfflineBanner />
           <Suspense fallback={<LoadingState label="Membuka halaman" />}>
             <Outlet />
           </Suspense>
@@ -106,6 +132,5 @@ export function AppShell({
         ))}
       </nav>
       </div>
-    </StoreSettingsProvider>
   )
 }

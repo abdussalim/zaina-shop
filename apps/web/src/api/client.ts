@@ -11,7 +11,12 @@ export class ApiClientError extends Error {
     public readonly requestId?: string,
   ) {
     super(message)
+    this.name = 'ApiClientError'
   }
+}
+
+export function isApiClientError(error: unknown): error is ApiClientError {
+  return error instanceof ApiClientError
 }
 
 export async function apiRequest<T>(

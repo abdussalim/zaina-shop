@@ -10,6 +10,7 @@ import { LoginPage, type AuthenticatedUser } from '../features/auth/LoginPage.js
 import { SessionReauthDialog } from '../features/auth/SessionReauthDialog.js'
 import { AppShell } from './AppShell.js'
 import { defaultStoreSettings } from './StoreSettingsContext.js'
+import { OfflineBoundary } from './OfflineBoundary.js'
 
 const DashboardPage = lazy(() =>
   import('../features/dashboard/DashboardPage.js').then((module) => ({ default: module.DashboardPage })),
@@ -97,14 +98,14 @@ function RoutedApp() {
           />
         }
       >
-        <Route index element={<DashboardPage />} />
-        <Route path="products" element={<ProductsPage />} />
-        <Route path="products/:id" element={<ProductDetailPage />} />
-        <Route path="sales/new" element={<SalesPage />} />
-        <Route path="sales/:id" element={<SaleReceipt />} />
-        <Route path="inventory" element={<InventoryPage />} />
-        <Route path="reports" element={<ReportsPage />} />
-        <Route path="settings" element={<SettingsPage />} />
+        <Route index element={<OfflineBoundary allowOffline={false}><DashboardPage /></OfflineBoundary>} />
+        <Route path="products" element={<OfflineBoundary allowOffline><ProductsPage /></OfflineBoundary>} />
+        <Route path="products/:id" element={<OfflineBoundary allowOffline><ProductDetailPage /></OfflineBoundary>} />
+        <Route path="sales/new" element={<OfflineBoundary allowOffline={false}><SalesPage /></OfflineBoundary>} />
+        <Route path="sales/:id" element={<OfflineBoundary allowOffline={false}><SaleReceipt /></OfflineBoundary>} />
+        <Route path="inventory" element={<OfflineBoundary allowOffline><InventoryPage /></OfflineBoundary>} />
+        <Route path="reports" element={<OfflineBoundary allowOffline={false}><ReportsPage /></OfflineBoundary>} />
+        <Route path="settings" element={<OfflineBoundary allowOffline={false}><SettingsPage /></OfflineBoundary>} />
       </Route>
       <Route path="/login" element={<Navigate to="/" replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />
