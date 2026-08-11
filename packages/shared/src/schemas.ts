@@ -1,6 +1,13 @@
 import { z } from 'zod'
 
 const moneySchema = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER)
+const threeDecimalNonNegativeSchema = z
+  .number()
+  .min(0)
+  .max(Number.MAX_SAFE_INTEGER)
+  .refine((value) => Number(value.toFixed(3)) === value, {
+    message: 'Nilai maksimal memiliki tiga angka desimal',
+  })
 const quantitySchema = z
   .number()
   .positive()
@@ -15,13 +22,60 @@ const optionalText = (maximum: number) =>
     z.string().trim().max(maximum).optional(),
   )
 
-export const productUnitInputSchema = z.object({
-  id: z.uuid().optional(),
-  name: z.string().trim().min(1).max(40),
-  factor: quantitySchema,
-  salePrice: moneySchema,
-  isDefault: z.boolean(),
-})
+export const discountTypeSchema = z.enum(['PERCENTAGE', 'FIXED'])
+
+export const productUnitInputSchema = z
+  .object({
+    id: z.uuid().optional(),
+    name: z.string().trim().min(1).max(40),
+    factor: quantitySchema,
+    salePrice: moneySchema,
+    isDefault: z.boolean(),
+    discountType: discountTypeSchema.default('PERCENTAGE'),
+    minimumDiscount: threeDecimalNonNegativeSchema.default(0),
+    maximumDiscount: threeDecimalNonNegativeSchema.default(0),
+  })
+  .superRefine((unit, context) => {
+    if (unit.minimumDiscount > unit.maximumDiscount) {
+      context.addIssue({
+        code: 'custom',
+        path: ['minimumDiscount'],
+        message: 'Diskon minimum tidak boleh melebihi maksimum',
+      })
+    }
+
+    if (unit.discountType === 'PERCENTAGE' && unit.maximumDiscount > 100) {
+      context.addIssue({
+        code: 'custom',
+        path: ['maximumDiscount'],
+        message: 'Diskon persentase maksimal 100%',
+      })
+    }
+
+    if (unit.discountType === 'FIXED') {
+      if (!Number.isInteger(unit.minimumDiscount)) {
+        context.addIssue({
+          code: 'custom',
+          path: ['minimumDiscount'],
+          message: 'Diskon nominal harus berupa rupiah bulat',
+        })
+      }
+      if (!Number.isInteger(unit.maximumDiscount)) {
+        context.addIssue({
+          code: 'custom',
+          path: ['maximumDiscount'],
+          message: 'Diskon nominal harus berupa rupiah bulat',
+        })
+      }
+      if (unit.maximumDiscount > unit.salePrice) {
+        context.addIssue({
+          code: 'custom',
+          path: ['maximumDiscount'],
+          message: 'Diskon nominal tidak boleh melebihi harga jual',
+        })
+      }
+    }
+  })
 
 export const productInputSchema = z
   .object({
@@ -137,12 +191,13 @@ export const saleItemInputSchema = z.object({
   productId: z.uuid(),
   unitId: z.uuid(),
   quantity: quantitySchema,
+  discountValue: threeDecimalNonNegativeSchema.default(0),
 })
 
 export const saleInputSchema = z
   .object({
     idempotencyKey: z.uuid(),
-    discount: moneySchema.default(0),
+    discount: z.literal(0).default(0),
     amountPaid: moneySchema,
     note: optionalText(500),
     items: z.array(saleItemInputSchema).min(1).max(100),
@@ -188,6 +243,7 @@ export const passwordChangeInputSchema = z
 
 export type ProductInput = z.infer<typeof productInputSchema>
 export type ProductUnitInput = z.infer<typeof productUnitInputSchema>
+export type DiscountType = z.infer<typeof discountTypeSchema>
 export type StockMovementInput = z.infer<typeof stockMovementInputSchema>
 export type SaleInput = z.infer<typeof saleInputSchema>
 export type LoginInput = z.infer<typeof loginInputSchema>
