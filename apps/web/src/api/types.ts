@@ -69,6 +69,12 @@ export interface SaleItem {
   unitPrice: number
   costPrice: number
   subtotal: number
+  discountTypeSnapshot: 'PERCENTAGE' | 'FIXED'
+  minimumDiscountSnapshot: number
+  maximumDiscountSnapshot: number
+  discountValue: number
+  discountAmount: number
+  total: number
 }
 
 export interface Sale {

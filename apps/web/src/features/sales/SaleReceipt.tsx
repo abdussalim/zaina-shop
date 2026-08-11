@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { apiRequest, ApiClientError, jsonBody } from '../../api/client.js'
-import type { Sale } from '../../api/types.js'
+import type { Sale, SaleItem } from '../../api/types.js'
 import { Button } from '../../components/ui/Button.js'
 import { Modal } from '../../components/ui/Modal.js'
 import { EmptyState, LoadingState } from '../../components/ui/States.js'
@@ -53,8 +53,25 @@ export function SaleReceipt() {
         </header>
         <div className="receipt__meta"><div><span>Nomor transaksi</span><strong>{receipt.saleNumber}</strong></div><div><span>Waktu</span><strong>{formatDateTime(receipt.soldAt, storeSettings.timezone)}</strong></div></div>
         <div className="receipt__items">
-          <div className="receipt__row receipt__row--head"><span>Barang</span><span>Jumlah</span><span>Harga</span><span>Subtotal</span></div>
-          {receipt.items?.map((item) => <div className="receipt__row" key={item.id}><span><strong>{item.productName}</strong><small>{item.unitName}</small></span><span>{formatQuantity(item.quantityInput)}</span><span>{formatCurrency(item.unitPrice)}</span><strong>{formatCurrency(item.subtotal)}</strong></div>)}
+          <div className="receipt__row receipt__row--head"><span>Barang</span><span>Jumlah</span><span>Harga</span><span>Kotor</span><span>Diskon</span><span>Bersih</span></div>
+          {receipt.items?.map((item) => (
+            <div className="receipt__row" key={item.id}>
+              <span className="receipt__item-name">
+                <strong>{item.productName}</strong>
+                <small>
+                  <span className="receipt__mobile-quantity">{formatQuantity(item.quantityInput)} × </span>
+                  {item.unitName}
+                  <span className="receipt__mobile-price"> · @ {formatCurrency(item.unitPrice)}</span>
+                </small>
+                <small>{formatAppliedDiscount(item)}</small>
+              </span>
+              <span className="receipt__quantity">{formatQuantity(item.quantityInput)}</span>
+              <span className="receipt__price">{formatCurrency(item.unitPrice)}</span>
+              <span className="receipt__gross" data-label="Kotor">{formatCurrency(item.subtotal)}</span>
+              <span className="receipt__discount" data-label="Diskon">− {formatCurrency(item.discountAmount)}</span>
+              <strong className="receipt__net" data-label="Bersih">{formatCurrency(item.total)}</strong>
+            </div>
+          ))}
         </div>
         <dl className="receipt__totals"><div><dt>Subtotal</dt><dd>{formatCurrency(receipt.subtotal)}</dd></div><div><dt>Diskon</dt><dd>− {formatCurrency(receipt.discount)}</dd></div><div className="receipt__grand"><dt>Total</dt><dd>{formatCurrency(receipt.total)}</dd></div><div><dt>Dibayar</dt><dd>{formatCurrency(receipt.amountPaid)}</dd></div><div><dt>Kembalian</dt><dd>{formatCurrency(receipt.changeAmount)}</dd></div></dl>
         {receipt.note ? <p className="receipt__note">Catatan: {receipt.note}</p> : null}
@@ -71,4 +88,12 @@ export function SaleReceipt() {
       </Modal>
     </div>
   )
+}
+
+function formatAppliedDiscount(item: SaleItem): string {
+  if (item.discountValue === 0) return 'Tanpa diskon'
+  if (item.discountTypeSnapshot === 'FIXED') {
+    return `Diskon ${formatCurrency(item.discountValue)} / ${item.unitName}`
+  }
+  return `Diskon ${formatQuantity(item.discountValue)}%`
 }

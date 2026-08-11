@@ -184,4 +184,105 @@ describe('SalesPage', () => {
     }
     expect(secondBody.idempotencyKey).toBe(firstBody.idempotencyKey)
   })
+
+  it('applies a fixed discount to each purchased unit and submits it on the line', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: products }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: { id: 'sale-1' } }), {
+          status: 201,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+      .mockResolvedValue(
+        new Response(JSON.stringify({ data: products }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+    vi.stubGlobal('fetch', fetchMock)
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.click(
+      await screen.findByRole('button', { name: /Piring Kaca Bening/ }, { timeout: 5_000 }),
+    )
+    await user.selectOptions(screen.getByLabelText('Satuan'), 'unit-dozen')
+    await user.clear(screen.getByLabelText('Jumlah'))
+    await user.type(screen.getByLabelText('Jumlah'), '2')
+    await user.clear(screen.getByLabelText('Diskon per satuan'))
+    await user.type(screen.getByLabelText('Diskon per satuan'), '5000')
+    await user.type(screen.getByLabelText('Jumlah dibayar'), '220000')
+
+    const cart = screen.getByText('Keranjang').closest('aside')!
+    expect(within(cart).getAllByText('Rp230.000').length).toBeGreaterThan(0)
+    expect(within(cart).getAllByText('− Rp10.000').length).toBeGreaterThan(0)
+    expect(within(cart).getAllByText('Rp220.000').length).toBeGreaterThan(0)
+
+    await user.click(screen.getByRole('button', { name: 'Selesaikan penjualan' }))
+    await waitFor(() => {
+      expect(fetchMock.mock.calls.some(([path]) => path === '/api/v1/sales')).toBe(true)
+    })
+
+    const saleRequest = fetchMock.mock.calls.find(([path]) => path === '/api/v1/sales')
+    const body = JSON.parse(String(saleRequest?.[1]?.body)) as {
+      discount?: number
+      items: { discountValue: number }[]
+    }
+    expect(body.discount).toBeUndefined()
+    expect(body.items[0]?.discountValue).toBe(5_000)
+  })
+
+  it('blocks a nonzero discount below the selected unit minimum', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ data: products }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      ),
+    )
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.click(
+      await screen.findByRole('button', { name: /Piring Kaca Bening/ }, { timeout: 5_000 }),
+    )
+    await user.selectOptions(screen.getByLabelText('Satuan'), 'unit-dozen')
+    await user.clear(screen.getByLabelText('Diskon per satuan'))
+    await user.type(screen.getByLabelText('Diskon per satuan'), '1')
+
+    expect(screen.getByText('Gunakan 0 atau diskon Rp5.000–Rp10.000')).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Selesaikan penjualan' })).toBeDisabled()
+  })
+
+  it('resets the line discount when its selling unit changes', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ data: products }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      ),
+    )
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.click(
+      await screen.findByRole('button', { name: /Piring Kaca Bening/ }, { timeout: 5_000 }),
+    )
+    await user.clear(screen.getByLabelText('Diskon per satuan'))
+    await user.type(screen.getByLabelText('Diskon per satuan'), '10')
+    await user.selectOptions(screen.getByLabelText('Satuan'), 'unit-dozen')
+
+    expect(screen.getByLabelText('Diskon per satuan')).toHaveValue(0)
+  })
 })

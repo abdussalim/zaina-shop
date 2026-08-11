@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Minus, Plus, Search, ShoppingBasket, Trash2 } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { calculateSaleLineTotals, getDiscountValidationMessage } from '@zaina/shared'
 
 import { apiRequest, ApiClientError, jsonBody } from '../../api/client.js'
 import type { Product, ProductUnit, Sale } from '../../api/types.js'
@@ -9,12 +10,13 @@ import { Button } from '../../components/ui/Button.js'
 import { PageHeader } from '../../components/ui/PageHeader.js'
 import { EmptyState, LoadingState } from '../../components/ui/States.js'
 import { StatusBadge } from '../../components/ui/StatusBadge.js'
-import { formatCurrency, formatQuantity, getStockLabel, getStockTone } from '../../lib/format.js'
+import { formatCurrency, formatDiscountRange, formatQuantity, getStockLabel, getStockTone } from '../../lib/format.js'
 
 interface CartLine {
   product: Product
   unitId: string
   quantity: number
+  discountValue: number
 }
 
 export function SalesPage() {
@@ -22,7 +24,6 @@ export function SalesPage() {
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [cart, setCart] = useState<CartLine[]>([])
-  const [discount, setDiscount] = useState(0)
   const [amountPaid, setAmountPaid] = useState(0)
   const [note, setNote] = useState('')
   const [checkoutError, setCheckoutError] = useState<string>()
@@ -42,22 +43,21 @@ export function SalesPage() {
     )
   }, [products.data, search])
 
-  const subtotal = cart.reduce((sum, line) => {
-    const unit = selectedUnit(line)
-    return sum + Math.round(line.quantity * unit.salePrice)
-  }, 0)
-  const total = Math.max(0, subtotal - discount)
+  const lineSummaries = cart.map(summarizeLine)
+  const subtotal = lineSummaries.reduce((sum, line) => sum + line.subtotal, 0)
+  const discount = lineSummaries.reduce((sum, line) => sum + line.discountAmount, 0)
+  const total = lineSummaries.reduce((sum, line) => sum + line.total, 0)
 
   const checkout = useMutation({
     mutationFn: () => {
       const transaction = {
-        discount,
         amountPaid,
         note,
         items: cart.map((line) => ({
           productId: line.product.id,
           unitId: line.unitId,
           quantity: line.quantity,
+          discountValue: line.discountValue,
         })),
       }
       const signature = JSON.stringify(transaction)
@@ -94,10 +94,16 @@ export function SalesPage() {
     if (cart.some((line) => line.product.id === product.id)) return
     const defaultUnit = product.units.find((unit) => unit.isDefault) ?? product.units[0]
     if (!defaultUnit) return
-    setCart((current) => [...current, { product, unitId: defaultUnit.id, quantity: 1 }])
+    setCart((current) => [
+      ...current,
+      { product, unitId: defaultUnit.id, quantity: 1, discountValue: 0 },
+    ])
   }
 
-  function updateLine(productId: string, patch: Partial<Pick<CartLine, 'unitId' | 'quantity'>>) {
+  function updateLine(
+    productId: string,
+    patch: Partial<Pick<CartLine, 'unitId' | 'quantity' | 'discountValue'>>,
+  ) {
     setCart((current) =>
       current.map((line) => (line.product.id === productId ? { ...line, ...patch } : line)),
     )
@@ -107,18 +113,18 @@ export function SalesPage() {
     (line) => line.quantity * selectedUnit(line).factor <= line.product.balanceBase,
   )
   const validQuantities = cart.every(
-    (line) => Number.isFinite(line.quantity) && line.quantity > 0,
+    (line) =>
+      Number.isFinite(line.quantity) &&
+      line.quantity > 0 &&
+      Number(line.quantity.toFixed(3)) === line.quantity,
   )
-  const validPayment =
-    Number.isFinite(discount) &&
-    discount >= 0 &&
-    Number.isFinite(amountPaid) &&
-    amountPaid >= 0
+  const validDiscounts = lineSummaries.every((line) => !line.discountError)
+  const validPayment = Number.isFinite(amountPaid) && amountPaid >= 0
   const canCheckout =
     cart.length > 0 &&
     validQuantities &&
+    validDiscounts &&
     validPayment &&
-    discount <= subtotal &&
     amountPaid >= total &&
     stockEnough &&
     !checkout.isPending
@@ -185,8 +191,8 @@ export function SalesPage() {
             <div className="cart-empty"><ShoppingBasket aria-hidden="true" /><p>Pilih barang di sebelah kiri untuk memulai penjualan.</p></div>
           ) : (
             <div className="cart-lines">
-              {cart.map((line) => {
-                const unit = selectedUnit(line)
+              {lineSummaries.map((summary) => {
+                const { line, unit } = summary
                 return (
                   <article className="cart-line" key={line.product.id}>
                     <div className="cart-line__title">
@@ -196,7 +202,14 @@ export function SalesPage() {
                     <div className="cart-line__controls">
                       <label>
                         <span>Satuan</span>
-                        <select aria-label={cart.length === 1 ? 'Satuan' : `Satuan ${line.product.name}`} value={line.unitId} onChange={(event) => updateLine(line.product.id, { unitId: event.target.value })}>
+                        <select
+                          aria-label={cart.length === 1 ? 'Satuan' : `Satuan ${line.product.name}`}
+                          value={line.unitId}
+                          onChange={(event) => updateLine(line.product.id, {
+                            unitId: event.target.value,
+                            discountValue: 0,
+                          })}
+                        >
                           {line.product.units.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
                         </select>
                       </label>
@@ -211,7 +224,33 @@ export function SalesPage() {
                     </div>
                     <div className="cart-line__conversion">
                       <span>{formatQuantity(line.quantity * unit.factor)} {line.product.baseUnit} dari stok</span>
-                      <strong>{formatCurrency(line.quantity * unit.salePrice)}</strong>
+                      <small>@ {formatCurrency(unit.salePrice)} / {unit.name}</small>
+                    </div>
+                    <label className="cart-line__discount">
+                      <span>Diskon per {unit.name}</span>
+                      <div className="discount-input">
+                        {unit.discountType === 'FIXED' ? <span>Rp</span> : null}
+                        <input
+                          aria-label={cart.length === 1 ? 'Diskon per satuan' : `Diskon ${line.product.name}`}
+                          type="number"
+                          min="0"
+                          step={unit.discountType === 'FIXED' ? '1' : '0.001'}
+                          value={line.discountValue}
+                          onChange={(event) => updateLine(line.product.id, {
+                            discountValue: Number(event.target.value),
+                          })}
+                        />
+                        {unit.discountType === 'PERCENTAGE' ? <span>%</span> : null}
+                      </div>
+                      <small>0 selalu boleh · {formatDiscountRange(unit)}</small>
+                      {summary.discountError ? (
+                        <small className="cart-line__error">{summary.discountError}</small>
+                      ) : null}
+                    </label>
+                    <div className="cart-line__pricing">
+                      <div><span>Kotor</span><strong>{formatCurrency(summary.subtotal)}</strong></div>
+                      <div><span>Potongan</span><strong>− {formatCurrency(summary.discountAmount)}</strong></div>
+                      <div><span>Bersih</span><strong>{formatCurrency(summary.total)}</strong></div>
                     </div>
                   </article>
                 )
@@ -220,8 +259,8 @@ export function SalesPage() {
           )}
 
           <div className="cart-totals">
-            <label><span>Diskon</span><input type="number" min="0" value={discount || ''} onChange={(event) => setDiscount(Number(event.target.value))} /></label>
-            <div><span>Subtotal</span><strong>{formatCurrency(subtotal)}</strong></div>
+            <div><span>Subtotal kotor</span><strong>{formatCurrency(subtotal)}</strong></div>
+            <div><span>Total diskon</span><strong>− {formatCurrency(discount)}</strong></div>
             <div className="cart-totals__grand"><span>Total</span><strong>{formatCurrency(total)}</strong></div>
             <label><span>Jumlah dibayar</span><input aria-label="Jumlah dibayar" type="number" min="0" value={amountPaid || ''} onChange={(event) => setAmountPaid(Number(event.target.value))} /></label>
             <div><span>Kembalian</span><strong>{formatCurrency(Math.max(0, amountPaid - total))}</strong></div>
@@ -240,7 +279,6 @@ export function SalesPage() {
           >
             Selesaikan penjualan
           </Button>
-          {cart.length > 0 && discount > subtotal ? <small className="cart-hint">Diskon tidak boleh melebihi subtotal.</small> : null}
           {cart.length > 0 && !validQuantities ? <small className="cart-hint">Jumlah setiap barang harus lebih dari nol.</small> : null}
           {cart.length > 0 && !stockEnough ? <small className="cart-hint">Jumlah keranjang melebihi stok yang tersedia.</small> : null}
           {cart.length > 0 && amountPaid < total ? <small className="cart-hint">Jumlah dibayar harus mencapai total.</small> : null}
@@ -252,6 +290,24 @@ export function SalesPage() {
 
 function selectedUnit(line: CartLine): ProductUnit {
   return line.product.units.find((unit) => unit.id === line.unitId) ?? line.product.units[0]!
+}
+
+function summarizeLine(line: CartLine) {
+  const unit = selectedUnit(line)
+  const discountError = getDiscountValidationMessage(unit, line.discountValue)
+  const validQuantity =
+    Number.isFinite(line.quantity) &&
+    line.quantity > 0 &&
+    Number(line.quantity.toFixed(3)) === line.quantity
+  const totals = validQuantity
+    ? calculateSaleLineTotals({
+        quantity: line.quantity,
+        unitPrice: unit.salePrice,
+        discountType: unit.discountType,
+        discountValue: discountError ? 0 : line.discountValue,
+      })
+    : { subtotal: 0, discountAmount: 0, total: 0 }
+  return { line, unit, discountError, ...totals }
 }
 
 function defaultSellingUnit(product: Product): ProductUnit | undefined {
