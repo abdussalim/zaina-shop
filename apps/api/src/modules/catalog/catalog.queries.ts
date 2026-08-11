@@ -31,6 +31,9 @@ interface UnitRecord {
   name: string
   factor: string | number
   sale_price: string | number
+  discount_type: 'PERCENTAGE' | 'FIXED'
+  minimum_discount: string | number
+  maximum_discount: string | number
   is_default: boolean
 }
 
@@ -116,7 +119,8 @@ async function findUnits(database: Database, productIds: readonly string[]) {
   if (productIds.length === 0) return grouped
   const placeholders = productIds.map((_id, index) => `$${index + 1}`).join(', ')
   const result = await database.query<UnitRecord>(
-    `SELECT id, product_id, name, factor, sale_price, is_default
+    `SELECT id, product_id, name, factor, sale_price, discount_type,
+            minimum_discount, maximum_discount, is_default
      FROM product_units
      WHERE product_id IN (${placeholders}) AND is_active = TRUE
      ORDER BY factor, name`,
@@ -169,6 +173,9 @@ function mapProduct(product: ProductRecord, units: readonly UnitRecord[]) {
       name: unit.name,
       factor: Number(unit.factor),
       salePrice: Number(unit.sale_price),
+      discountType: unit.discount_type,
+      minimumDiscount: Number(unit.minimum_discount),
+      maximumDiscount: Number(unit.maximum_discount),
       isDefault: unit.is_default,
     })),
   }

@@ -11,6 +11,9 @@ interface UnitRecord {
   name: string
   factor: string | number
   sale_price: string | number
+  discount_type: 'PERCENTAGE' | 'FIXED'
+  minimum_discount: string | number
+  maximum_discount: string | number
   is_default: boolean
   is_active: boolean
 }
@@ -99,7 +102,8 @@ async function replaceOrUpdateUnits(
   input: ProductInput,
 ): Promise<void> {
   const current = await database.query<UnitRecord>(
-    `SELECT id, product_id, name, factor, sale_price, is_default, is_active
+    `SELECT id, product_id, name, factor, sale_price, discount_type,
+            minimum_discount, maximum_discount, is_default, is_active
      FROM product_units WHERE product_id = $1`,
     [productId],
   )
@@ -130,7 +134,8 @@ async function replaceOrUpdateUnits(
     if (existing && hasSameUnitIdentity(existing, unit)) {
       const updated = await database.query(
         `UPDATE product_units SET
-           name = $3, factor = $4, sale_price = $5, is_default = $6,
+           name = $3, factor = $4, sale_price = $5, discount_type = $6,
+           minimum_discount = $7, maximum_discount = $8, is_default = $9,
            is_active = TRUE,
            updated_at = CURRENT_TIMESTAMP
          WHERE id = $1 AND product_id = $2`,
@@ -140,6 +145,9 @@ async function replaceOrUpdateUnits(
           unit.name,
           unit.factor,
           unit.salePrice,
+          unit.discountType,
+          unit.minimumDiscount,
+          unit.maximumDiscount,
           unit.isDefault,
         ],
       )
@@ -149,14 +157,18 @@ async function replaceOrUpdateUnits(
 
     await database.query(
       `INSERT INTO product_units (
-         id, product_id, name, factor, sale_price, is_default
-       ) VALUES ($1, $2, $3, $4, $5, $6)`,
+         id, product_id, name, factor, sale_price, discount_type,
+         minimum_discount, maximum_discount, is_default
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
       [
         randomUUID(),
         productId,
         unit.name,
         unit.factor,
         unit.salePrice,
+        unit.discountType,
+        unit.minimumDiscount,
+        unit.maximumDiscount,
         unit.isDefault,
       ],
     )

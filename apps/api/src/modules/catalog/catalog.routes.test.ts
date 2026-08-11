@@ -35,8 +35,24 @@ describe('catalog routes', () => {
       minimumStock: 12,
       imageUrl: '',
       units: [
-        { name: 'buah', factor: 1, salePrice: 10_000, isDefault: true },
-        { name: 'lusin', factor: 12, salePrice: 115_000, isDefault: false },
+        {
+          name: 'buah',
+          factor: 1,
+          salePrice: 10_000,
+          isDefault: true,
+          discountType: 'PERCENTAGE',
+          minimumDiscount: 5,
+          maximumDiscount: 20,
+        },
+        {
+          name: 'lusin',
+          factor: 12,
+          salePrice: 115_000,
+          isDefault: false,
+          discountType: 'FIXED',
+          minimumDiscount: 5_000,
+          maximumDiscount: 10_000,
+        },
       ],
     }
   }
@@ -68,8 +84,20 @@ describe('catalog routes', () => {
     })
     expect(response.body.data.units).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ name: 'buah', factor: 1 }),
-        expect.objectContaining({ name: 'lusin', factor: 12 }),
+        expect.objectContaining({
+          name: 'buah',
+          factor: 1,
+          discountType: 'PERCENTAGE',
+          minimumDiscount: 5,
+          maximumDiscount: 20,
+        }),
+        expect.objectContaining({
+          name: 'lusin',
+          factor: 12,
+          discountType: 'FIXED',
+          minimumDiscount: 5_000,
+          maximumDiscount: 10_000,
+        }),
       ]),
     )
   })
@@ -110,6 +138,8 @@ describe('catalog routes', () => {
     const update = productInput('UPD-101', 'Piring Kaca Premium')
     update.salePrice = 12_000
     update.units[0]!.salePrice = 12_000
+    update.units[1]!.minimumDiscount = 7_500
+    update.units[1]!.maximumDiscount = 12_500
 
     const response = await context.agent
       .patch(`/api/v1/products/${created.body.data.id}`)
@@ -122,6 +152,16 @@ describe('catalog routes', () => {
       salePrice: 12_000,
       balanceBase: 0,
     })
+    expect(response.body.data.units).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: 'lusin',
+          discountType: 'FIXED',
+          minimumDiscount: 7_500,
+          maximumDiscount: 12_500,
+        }),
+      ]),
+    )
   })
 
   it('archives removed selling units without exposing them to new sales', async () => {
