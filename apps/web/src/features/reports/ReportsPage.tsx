@@ -1,21 +1,24 @@
 import { useQuery } from '@tanstack/react-query'
 import { BarChart3, Boxes, Download, FileText, Settings } from 'lucide-react'
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
 import { apiRequest } from '../../api/client.js'
 import type { InventoryReport, SalesReport } from '../../api/types.js'
 import { PageHeader } from '../../components/ui/PageHeader.js'
-import { EmptyState, LoadingState } from '../../components/ui/States.js'
+import { EmptyState, LoadingState, OfflineState } from '../../components/ui/States.js'
 import { StatusBadge } from '../../components/ui/StatusBadge.js'
 import { formatCurrency, formatDateTime, formatQuantity, getStockLabel, getStockTone } from '../../lib/format.js'
 import { useStoreSettings } from '../../app/StoreSettingsContext.js'
+import { useConnectivity } from '../../app/ConnectivityContext.js'
+
+const SalesChart = lazy(() => import('./SalesChart.js').then((module) => ({ default: module.SalesChart })))
 
 type ReportTab = 'sales' | 'inventory'
 
 export function ReportsPage() {
   const storeSettings = useStoreSettings()
+  const { isOffline } = useConnectivity()
   const today = localDate(new Date(), storeSettings.timezone)
   const [from, setFrom] = useState(`${today.slice(0, 8)}01`)
   const [to, setTo] = useState(today)
@@ -23,11 +26,15 @@ export function ReportsPage() {
   const sales = useQuery({
     queryKey: ['reports', 'sales', from, to],
     queryFn: () => apiRequest<SalesReport>(`/api/v1/reports/sales?from=${from}&to=${to}`),
+    enabled: !isOffline,
   })
   const inventory = useQuery({
     queryKey: ['reports', 'inventory'],
     queryFn: () => apiRequest<InventoryReport>('/api/v1/reports/inventory'),
+    enabled: !isOffline,
   })
+
+  if (isOffline) return <OfflineState title="Laporan membutuhkan koneksi" description="Laporan dan nota tidak disimpan sebagai cache bisnis offline." />
 
   return (
     <div className="page-stack reports-page">
@@ -96,15 +103,7 @@ function SalesReportView({
           <div className="section-heading"><div><p className="eyebrow">Peringkat</p><h2>Barang terlaris</h2></div></div>
           {report.topProducts.length ? (
             <div className="report-chart" aria-label="Grafik barang terlaris">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={report.topProducts.slice(0, 8)} layout="vertical" margin={{ left: 8, right: 18 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#dcd6c8" />
-                  <XAxis type="number" hide />
-                  <YAxis type="category" dataKey="productName" width={120} tick={{ fontSize: 11, fill: '#66675e' }} axisLine={false} tickLine={false} />
-                  <Tooltip formatter={(value) => formatQuantity(Number(value))} cursor={{ fill: '#f4f0e7' }} />
-                  <Bar dataKey="quantityBase" fill="#626a45" radius={[0, 4, 4, 0]} isAnimationActive={false} />
-                </BarChart>
-              </ResponsiveContainer>
+              <Suspense fallback={<LoadingState label="Menyiapkan grafik" />}><SalesChart data={report.topProducts} /></Suspense>
             </div>
           ) : <div className="inline-empty">Belum ada penjualan pada rentang ini.</div>}
         </section>

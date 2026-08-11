@@ -3,6 +3,8 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { SettingsPage } from './SettingsPage.js'
+import { ConnectivityProvider } from '../../app/ConnectivityContext.js'
+import type { ConnectivityController } from '../../pwa/connectivity.js'
 
 describe('SettingsPage', () => {
   afterEach(() => vi.unstubAllGlobals())
@@ -38,5 +40,11 @@ describe('SettingsPage', () => {
 
     expect(await screen.findByText('Nama toko minimal 2 karakter')).toBeVisible()
     expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows an online-only state when disconnected', () => {
+    const controller: ConnectivityController = { getStatus: () => 'offline', getLastCheckedAt: () => null, subscribe: () => () => undefined, refresh: async () => false, dispose: () => undefined }
+    render(<QueryClientProvider client={new QueryClient()}><ConnectivityProvider storeKey="user-1" controller={controller}><SettingsPage /></ConnectivityProvider></QueryClientProvider>)
+    expect(screen.getByText('Pengaturan membutuhkan koneksi')).toBeInTheDocument()
   })
 })
