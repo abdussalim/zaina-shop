@@ -13,7 +13,9 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
 ) {
   const generatedId = useId()
   const inputId = id ?? generatedId
-  const descriptionId = error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined
+  const hintId = hint ? `${inputId}-hint` : undefined
+  const errorId = error ? `${inputId}-error` : undefined
+  const descriptionId = [hintId, errorId].filter(Boolean).join(' ') || undefined
   return (
     <div className={`field ${error ? 'field--error' : ''} ${className}`}>
       <label htmlFor={inputId} className="field__label">
@@ -29,15 +31,8 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
         />
         {trailing ? <div className="field__trailing">{trailing}</div> : null}
       </div>
-      {error ? (
-        <p id={descriptionId} className="field__message field__message--error">
-          {error}
-        </p>
-      ) : hint ? (
-        <p id={descriptionId} className="field__message">
-          {hint}
-        </p>
-      ) : null}
+      {hint ? <p id={hintId} className="field__message">{hint}</p> : null}
+      {error ? <p id={errorId} className="field__message field__message--error" role="alert">{error}</p> : null}
     </div>
   )
 })

@@ -221,6 +221,8 @@ h2 {
 .button--ghost:hover:not(:disabled) { background: rgb(98 106 69 / 0.09); }
 .button--danger { color: white; background: var(--danger); }
 .button__spinner { animation: spin 750ms linear infinite; }
+.button__disabled-reason,
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
 .icon-button {
   display: inline-grid;

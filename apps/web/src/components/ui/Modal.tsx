@@ -29,6 +29,7 @@ export function Modal({
         <Dialog.Overlay className="modal__overlay" />
         <Dialog.Content
           className={`modal modal--${size}`}
+          data-mobile-sheet="true"
           onEscapeKeyDown={(event) => {
             if (!dismissible) event.preventDefault()
           }}
