@@ -29,6 +29,12 @@ interface SaleItemRow {
   unit_price: string | number
   cost_price: string | number
   subtotal: string | number
+  discount_type_snapshot: 'PERCENTAGE' | 'FIXED'
+  minimum_discount_snapshot: string | number
+  maximum_discount_snapshot: string | number
+  discount_value: string | number
+  discount_amount: string | number
+  total: string | number
 }
 
 export async function findSaleByIdempotencyKey(
@@ -112,7 +118,10 @@ const saleSelect = `
 const saleItemSelect = `
   SELECT si.id, si.product_id, si.unit_id, si.product_name, si.unit_name,
          si.factor_snapshot, si.quantity_input, si.quantity_base,
-         si.unit_price, si.cost_price, si.subtotal
+         si.unit_price, si.cost_price, si.subtotal,
+         si.discount_type_snapshot, si.minimum_discount_snapshot,
+         si.maximum_discount_snapshot, si.discount_value,
+         si.discount_amount, si.total
   FROM sale_items si
 `
 
@@ -149,5 +158,11 @@ function mapSaleItem(item: SaleItemRow) {
     unitPrice: Number(item.unit_price),
     costPrice: Number(item.cost_price),
     subtotal: Number(item.subtotal),
+    discountTypeSnapshot: item.discount_type_snapshot,
+    minimumDiscountSnapshot: Number(item.minimum_discount_snapshot),
+    maximumDiscountSnapshot: Number(item.maximum_discount_snapshot),
+    discountValue: Number(item.discount_value),
+    discountAmount: Number(item.discount_amount),
+    total: Number(item.total),
   }
 }

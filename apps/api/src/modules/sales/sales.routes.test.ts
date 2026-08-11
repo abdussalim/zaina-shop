@@ -35,8 +35,24 @@ describe('sales routes', () => {
         salePrice: 10_000,
         minimumStock: 3,
         units: [
-          { name: 'buah', factor: 1, salePrice: 10_000, isDefault: true },
-          { name: 'lusin', factor: 12, salePrice: 115_000, isDefault: false },
+          {
+            name: 'buah',
+            factor: 1,
+            salePrice: 10_000,
+            isDefault: true,
+            discountType: 'PERCENTAGE',
+            minimumDiscount: 5,
+            maximumDiscount: 20,
+          },
+          {
+            name: 'lusin',
+            factor: 12,
+            salePrice: 115_000,
+            isDefault: false,
+            discountType: 'FIXED',
+            minimumDiscount: 5_000,
+            maximumDiscount: 10_000,
+          },
         ],
       })
     expect(productResponse.status).toBe(201)
@@ -69,9 +85,16 @@ describe('sales routes', () => {
     const product = await createStockedProduct('SALE-101', 1)
     const input = {
       idempotencyKey: randomUUID(),
-      discount: 5_000,
+      discount: 0,
       amountPaid: 120_000,
-      items: [{ productId: product.id, unitId: product.dozen.id, quantity: 1 }],
+      items: [
+        {
+          productId: product.id,
+          unitId: product.dozen.id,
+          quantity: 1,
+          discountValue: 5_000,
+        },
+      ],
     }
 
     const first = await context.agent
@@ -98,10 +121,138 @@ describe('sales routes', () => {
       quantityBase: 12,
       unitPrice: 115_000,
       costPrice: 7_000,
+      discountTypeSnapshot: 'FIXED',
+      minimumDiscountSnapshot: 5_000,
+      maximumDiscountSnapshot: 10_000,
+      discountValue: 5_000,
+      discountAmount: 5_000,
+      total: 110_000,
     })
     expect(replay.status).toBe(200)
     expect(replay.body.data.id).toBe(first.body.data.id)
+    expect(replay.body.data.items).toEqual(first.body.data.items)
     expect(detail.body.data.balanceBase).toBe(0)
+  })
+
+  it('rejects discounts outside the unit range without partial writes', async () => {
+    const product = await createStockedProduct('SALE-DISCOUNT-INVALID', 1)
+    const belowKey = randomUUID()
+    const aboveKey = randomUUID()
+    const movementsBefore = await context.database.query<{ count: string }>(
+      'SELECT COUNT(*) AS count FROM stock_movements WHERE product_id = $1',
+      [product.id],
+    )
+
+    const below = await context.agent
+      .post('/api/v1/sales')
+      .set('Origin', testConfig.appOrigin)
+      .send({
+        idempotencyKey: belowKey,
+        amountPaid: 10_000,
+        items: [
+          {
+            productId: product.id,
+            unitId: product.piece.id,
+            quantity: 1,
+            discountValue: 1,
+          },
+        ],
+      })
+    const above = await context.agent
+      .post('/api/v1/sales')
+      .set('Origin', testConfig.appOrigin)
+      .send({
+        idempotencyKey: aboveKey,
+        amountPaid: 10_000,
+        items: [
+          {
+            productId: product.id,
+            unitId: product.piece.id,
+            quantity: 1,
+            discountValue: 21,
+          },
+        ],
+      })
+
+    expect(below.status).toBe(422)
+    expect(below.body.error.code).toBe('DISCOUNT_OUT_OF_RANGE')
+    expect(above.status).toBe(422)
+    expect(above.body.error.code).toBe('DISCOUNT_OUT_OF_RANGE')
+
+    const sales = await context.database.query<{ count: string }>(
+      `SELECT COUNT(*) AS count FROM sales
+       WHERE idempotency_key IN ($1, $2)`,
+      [belowKey, aboveKey],
+    )
+    const movementsAfter = await context.database.query<{ count: string }>(
+      'SELECT COUNT(*) AS count FROM stock_movements WHERE product_id = $1',
+      [product.id],
+    )
+    const detail = await context.agent.get(`/api/v1/products/${product.id}`)
+
+    expect(Number(sales.rows[0]?.count)).toBe(0)
+    expect(movementsAfter.rows[0]?.count).toBe(movementsBefore.rows[0]?.count)
+    expect(detail.body.data.balanceBase).toBe(12)
+  })
+
+  it('rejects a non-zero legacy transaction discount', async () => {
+    const product = await createStockedProduct('SALE-GLOBAL-DISCOUNT', 1)
+    const response = await context.agent
+      .post('/api/v1/sales')
+      .set('Origin', testConfig.appOrigin)
+      .send({
+        idempotencyKey: randomUUID(),
+        discount: 1,
+        amountPaid: 10_000,
+        items: [
+          {
+            productId: product.id,
+            unitId: product.piece.id,
+            quantity: 1,
+            discountValue: 0,
+          },
+        ],
+      })
+
+    expect(response.status).toBe(422)
+    expect(response.body.error.code).toBe('VALIDATION_ERROR')
+  })
+
+  it('keeps the sale snapshot after the catalog rule changes', async () => {
+    const product = await createStockedProduct('SALE-SNAPSHOT', 1)
+    const sale = await context.agent
+      .post('/api/v1/sales')
+      .set('Origin', testConfig.appOrigin)
+      .send({
+        idempotencyKey: randomUUID(),
+        amountPaid: 10_000,
+        items: [
+          {
+            productId: product.id,
+            unitId: product.piece.id,
+            quantity: 1,
+            discountValue: 20,
+          },
+        ],
+      })
+    expect(sale.status).toBe(201)
+
+    await context.database.query(
+      `UPDATE product_units
+       SET minimum_discount = 0, maximum_discount = 0
+       WHERE id = $1`,
+      [product.piece.id],
+    )
+    const receipt = await context.agent.get(`/api/v1/sales/${sale.body.data.id}`)
+
+    expect(receipt.body.data.items[0]).toMatchObject({
+      discountTypeSnapshot: 'PERCENTAGE',
+      minimumDiscountSnapshot: 5,
+      maximumDiscountSnapshot: 20,
+      discountValue: 20,
+      discountAmount: 2_000,
+      total: 8_000,
+    })
   })
 
   it('rejects a sale without enough stock and leaves no partial transaction', async () => {

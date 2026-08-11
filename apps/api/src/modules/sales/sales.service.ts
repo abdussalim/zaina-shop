@@ -1,6 +1,11 @@
 import { randomUUID } from 'node:crypto'
 
-import { calculateSaleTotals, toBaseQuantity, type SaleInput } from '@zaina/shared'
+import {
+  calculateSaleLineTotals,
+  getDiscountValidationMessage,
+  toBaseQuantity,
+  type SaleInput,
+} from '@zaina/shared'
 
 import type { Database } from '../../db/database.js'
 import { AppError } from '../../http/errors.js'
@@ -31,11 +36,26 @@ export function prepareSaleLine(
   catalog: CatalogSnapshot,
 ): SaleLineSnapshot {
   const quantityBase = toBaseQuantity(input.quantity, catalog.factor)
+  const discountError = getDiscountValidationMessage(catalog, input.discountValue)
+  if (discountError) {
+    throw new AppError(
+      422,
+      'DISCOUNT_OUT_OF_RANGE',
+      `${catalog.productName}: ${discountError}`,
+    )
+  }
+  const amounts = calculateSaleLineTotals({
+    quantity: input.quantity,
+    unitPrice: catalog.salePrice,
+    discountType: catalog.discountType,
+    discountValue: input.discountValue,
+  })
   return {
     ...catalog,
     quantityInput: input.quantity,
     quantityBase,
-    subtotal: Math.round(input.quantity * catalog.salePrice),
+    discountValue: input.discountValue,
+    ...amounts,
     costTotal: Math.round(quantityBase * catalog.costPrice),
   }
 }
@@ -55,7 +75,7 @@ export function createSalesService(database: Database, timezone: string) {
             input.items.map((item) => item.unitId),
           )
           const lines = prepareLines(input, stocks, units)
-          const totals = saleTotals(lines, input.discount)
+          const totals = saleTotals(lines)
           if (input.amountPaid < totals.total) {
             throw new AppError(
               422,
@@ -181,21 +201,15 @@ function prepareLines(
   })
 }
 
-function saleTotals(lines: readonly SaleLineSnapshot[], discount: number) {
-  try {
-    return calculateSaleTotals(
-      lines.map((line) => ({
-        quantity: line.quantityInput,
-        unitPrice: line.salePrice,
-      })),
-      discount,
-    )
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('Diskon')) {
-      throw new AppError(422, 'INVALID_DISCOUNT', error.message)
-    }
-    throw error
-  }
+function saleTotals(lines: readonly SaleLineSnapshot[]) {
+  return lines.reduce(
+    (sum, line) => ({
+      subtotal: sum.subtotal + line.subtotal,
+      discount: sum.discount + line.discountAmount,
+      total: sum.total + line.total,
+    }),
+    { subtotal: 0, discount: 0, total: 0 },
+  )
 }
 
 function createSaleNumber(date: Date, timezone: string): string {

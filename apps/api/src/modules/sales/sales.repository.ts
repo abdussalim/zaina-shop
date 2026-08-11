@@ -1,5 +1,7 @@
 import { randomUUID } from 'node:crypto'
 
+import type { DiscountRule } from '@zaina/shared'
+
 import type { DatabaseClient } from '../../db/database.js'
 
 export interface StockSnapshot {
@@ -9,7 +11,7 @@ export interface StockSnapshot {
   costPrice: number
 }
 
-export interface UnitSnapshot {
+export interface UnitSnapshot extends DiscountRule {
   productId: string
   unitId: string
   unitName: string
@@ -24,6 +26,9 @@ export interface SaleLineSnapshot extends UnitSnapshot {
   costPrice: number
   costTotal: number
   subtotal: number
+  discountValue: number
+  discountAmount: number
+  total: number
 }
 
 export async function lockStockProducts(
@@ -69,8 +74,12 @@ export async function findSellingUnits(
     unit_name: string
     factor: string | number
     sale_price: string | number
+    discount_type: 'PERCENTAGE' | 'FIXED'
+    minimum_discount: string | number
+    maximum_discount: string | number
   }>(
-    `SELECT product_id, id AS unit_id, name AS unit_name, factor, sale_price
+    `SELECT product_id, id AS unit_id, name AS unit_name, factor, sale_price,
+            discount_type, minimum_discount, maximum_discount
      FROM product_units
      WHERE id IN (${placeholders}) AND is_active = TRUE`,
     unitIds,
@@ -81,6 +90,9 @@ export async function findSellingUnits(
     unitName: row.unit_name,
     factor: Number(row.factor),
     salePrice: Number(row.sale_price),
+    discountType: row.discount_type,
+    minimumDiscount: Number(row.minimum_discount),
+    maximumDiscount: Number(row.maximum_discount),
   }))
 }
 
@@ -128,8 +140,13 @@ export async function insertSaleLine(
     `INSERT INTO sale_items (
        id, sale_id, product_id, unit_id, product_name, unit_name,
        factor_snapshot, quantity_input, quantity_base, unit_price,
-       cost_price, subtotal
-     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+       cost_price, subtotal, discount_type_snapshot,
+       minimum_discount_snapshot, maximum_discount_snapshot,
+       discount_value, discount_amount, total
+     ) VALUES (
+       $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
+       $13, $14, $15, $16, $17, $18
+     )`,
     [
       randomUUID(),
       saleId,
@@ -143,6 +160,12 @@ export async function insertSaleLine(
       line.salePrice,
       line.costPrice,
       line.subtotal,
+      line.discountType,
+      line.minimumDiscount,
+      line.maximumDiscount,
+      line.discountValue,
+      line.discountAmount,
+      line.total,
     ],
   )
 }
@@ -234,9 +257,17 @@ export async function findCancellationLines(
     unit_price: string | number
     cost_price: string | number
     subtotal: string | number
+    discount_type_snapshot: 'PERCENTAGE' | 'FIXED'
+    minimum_discount_snapshot: string | number
+    maximum_discount_snapshot: string | number
+    discount_value: string | number
+    discount_amount: string | number
+    total: string | number
   }>(
     `SELECT product_id, product_name, unit_id, unit_name, factor_snapshot,
-            quantity_input, quantity_base, unit_price, cost_price, subtotal
+            quantity_input, quantity_base, unit_price, cost_price, subtotal,
+            discount_type_snapshot, minimum_discount_snapshot,
+            maximum_discount_snapshot, discount_value, discount_amount, total
      FROM sale_items WHERE sale_id = $1 ORDER BY product_id`,
     [saleId],
   )
@@ -252,6 +283,12 @@ export async function findCancellationLines(
     costPrice: Number(row.cost_price),
     costTotal: Number(row.quantity_base) * Number(row.cost_price),
     subtotal: Number(row.subtotal),
+    discountType: row.discount_type_snapshot,
+    minimumDiscount: Number(row.minimum_discount_snapshot),
+    maximumDiscount: Number(row.maximum_discount_snapshot),
+    discountValue: Number(row.discount_value),
+    discountAmount: Number(row.discount_amount),
+    total: Number(row.total),
   }))
 }
 
