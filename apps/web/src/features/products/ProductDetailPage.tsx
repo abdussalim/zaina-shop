@@ -10,7 +10,7 @@ import { Button } from '../../components/ui/Button.js'
 import { Modal } from '../../components/ui/Modal.js'
 import { EmptyState, LoadingState } from '../../components/ui/States.js'
 import { StatusBadge } from '../../components/ui/StatusBadge.js'
-import { formatCurrency, formatDateTime, formatQuantity, getStockLabel, getStockTone, movementLabels } from '../../lib/format.js'
+import { formatCurrency, formatDateTime, formatDiscountRange, formatQuantity, getStockLabel, getStockTone, movementLabels } from '../../lib/format.js'
 import { MovementForm } from '../inventory/MovementForm.js'
 import { ProductForm } from './ProductForm.js'
 import { useStoreSettings } from '../../app/StoreSettingsContext.js'
@@ -101,6 +101,10 @@ export function ProductDetailPage() {
                 <span>{unit.name}{unit.isDefault ? <small>default</small> : null}</span>
                 <strong>{formatQuantity(item.balanceBase / unit.factor)}</strong>
                 <small>{formatQuantity(unit.factor)} {item.baseUnit} · {formatCurrency(unit.salePrice)}</small>
+                <small className="unit-card__discount">
+                  {unit.minimumDiscount === 0 && unit.maximumDiscount === 0 ? '' : 'Diskon '}
+                  {formatDiscountRange(unit)}
+                </small>
               </article>
             ))}
           </div>

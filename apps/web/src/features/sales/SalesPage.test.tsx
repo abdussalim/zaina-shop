@@ -24,8 +24,26 @@ const products = [
     balanceBase: 24,
     stockStatus: 'OK',
     units: [
-      { id: 'unit-piece', name: 'buah', factor: 1, salePrice: 10_000, isDefault: true },
-      { id: 'unit-dozen', name: 'lusin', factor: 12, salePrice: 115_000, isDefault: false },
+      {
+        id: 'unit-piece',
+        name: 'buah',
+        factor: 1,
+        salePrice: 10_000,
+        isDefault: true,
+        discountType: 'PERCENTAGE' as const,
+        minimumDiscount: 5,
+        maximumDiscount: 20,
+      },
+      {
+        id: 'unit-dozen',
+        name: 'lusin',
+        factor: 12,
+        salePrice: 115_000,
+        isDefault: false,
+        discountType: 'FIXED' as const,
+        minimumDiscount: 5_000,
+        maximumDiscount: 10_000,
+      },
     ],
   },
 ]

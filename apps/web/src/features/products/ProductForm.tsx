@@ -25,6 +25,9 @@ interface ProductFormValues {
     name: string
     factor: number
     salePrice: number
+    discountType: 'PERCENTAGE' | 'FIXED'
+    minimumDiscount: number
+    maximumDiscount: number
   }[]
 }
 
@@ -44,10 +47,15 @@ const productFormSchema = z
     units: z
       .array(
         z.object({
-          id: z.uuid().optional(),
+          id: z.union([z.uuid(), z.literal('')])
+            .optional()
+            .transform((value) => value === '' ? undefined : value),
           name: z.string(),
           factor: z.number({ error: 'Faktor satuan wajib diisi' }),
           salePrice: z.number({ error: 'Harga satuan wajib diisi' }),
+          discountType: z.enum(['PERCENTAGE', 'FIXED']),
+          minimumDiscount: z.number({ error: 'Diskon minimum wajib diisi' }),
+          maximumDiscount: z.number({ error: 'Diskon maksimum wajib diisi' }),
         }),
       )
       .min(1),
@@ -88,6 +96,7 @@ export function ProductForm({
   const units = useFieldArray({ control: form.control, name: 'units' })
   const baseUnit = form.watch('baseUnit')
   const baseSalePrice = form.watch('salePrice')
+  const unitValues = form.watch('units')
   const unitsError = firstFieldError(form.formState.errors.units)
 
   useEffect(() => {
@@ -120,7 +129,7 @@ export function ProductForm({
       <section className="unit-builder">
         <div className="section-heading section-heading--compact">
           <div><h3>Satuan penjualan</h3><p>Faktor menyatakan berapa satuan dasar yang keluar dari stok.</p></div>
-          <Button type="button" variant="secondary" size="small" icon={<Plus />} onClick={() => units.append({ name: '', factor: 1, salePrice: 0 })}>Tambah satuan</Button>
+          <Button type="button" variant="secondary" size="small" icon={<Plus />} onClick={() => units.append({ name: '', factor: 1, salePrice: 0, discountType: 'PERCENTAGE', minimumDiscount: 0, maximumDiscount: 0 })}>Tambah satuan</Button>
         </div>
         <div className="unit-builder__rows">
           {units.fields.map((field, index) => (
@@ -130,6 +139,11 @@ export function ProductForm({
               <label><span>Nama</span><input {...form.register(`units.${index}.name`)} readOnly={index === 0} />{form.formState.errors.units?.[index]?.name ? <small className="field__message--error">{form.formState.errors.units[index]?.name?.message}</small> : null}</label>
               <label><span>Faktor</span><input type="number" min="0.001" step="0.001" {...form.register(`units.${index}.factor`, { valueAsNumber: true })} readOnly={index === 0} />{form.formState.errors.units?.[index]?.factor ? <small className="field__message--error">{form.formState.errors.units[index]?.factor?.message}</small> : null}</label>
               <label><span>Harga jual</span><input type="number" min="0" {...form.register(`units.${index}.salePrice`, { valueAsNumber: true })} readOnly={index === 0} />{form.formState.errors.units?.[index]?.salePrice ? <small className="field__message--error">{form.formState.errors.units[index]?.salePrice?.message}</small> : null}</label>
+              <div className="unit-row__discount">
+                <label><span>Jenis diskon</span><select aria-label={`Jenis diskon satuan ${index + 1}`} {...form.register(`units.${index}.discountType`)}><option value="PERCENTAGE">Persentase (%)</option><option value="FIXED">Nominal (Rp)</option></select>{form.formState.errors.units?.[index]?.discountType ? <small className="field__message--error">{form.formState.errors.units[index]?.discountType?.message}</small> : null}</label>
+                <label><span>Diskon minimum</span><input aria-label={`Diskon minimum satuan ${index + 1}`} type="number" min="0" step={unitValues[index]?.discountType === 'FIXED' ? '1' : '0.001'} {...form.register(`units.${index}.minimumDiscount`, { valueAsNumber: true })} />{form.formState.errors.units?.[index]?.minimumDiscount ? <small className="field__message--error">{form.formState.errors.units[index]?.minimumDiscount?.message}</small> : null}</label>
+                <label><span>Diskon maksimum</span><input aria-label={`Diskon maksimum satuan ${index + 1}`} type="number" min="0" step={unitValues[index]?.discountType === 'FIXED' ? '1' : '0.001'} {...form.register(`units.${index}.maximumDiscount`, { valueAsNumber: true })} />{form.formState.errors.units?.[index]?.maximumDiscount ? <small className="field__message--error">{form.formState.errors.units[index]?.maximumDiscount?.message}</small> : null}</label>
+              </div>
               <button type="button" className="icon-button" disabled={index === 0} onClick={() => units.remove(index)} aria-label={`Hapus satuan ${index + 1}`}><Trash2 /></button>
             </div>
           ))}
@@ -198,7 +212,15 @@ function defaults(
       minimumStock: product.minimumStock,
       imageUrl: product.imageUrl ?? '',
       defaultUnitIndex: Math.max(0, orderedUnits.findIndex((unit) => unit.isDefault)),
-      units: orderedUnits.map(({ id, name, factor, salePrice }) => ({ id, name, factor, salePrice })),
+      units: orderedUnits.map(({ id, name, factor, salePrice, discountType, minimumDiscount, maximumDiscount }) => ({
+        id,
+        name,
+        factor,
+        salePrice,
+        discountType,
+        minimumDiscount,
+        maximumDiscount,
+      })),
     }
   }
   return {
@@ -213,6 +235,13 @@ function defaults(
     minimumStock: defaultMinimumStock,
     imageUrl: '',
     defaultUnitIndex: 0,
-    units: [{ name: 'buah', factor: 1, salePrice: 0 }],
+    units: [{
+      name: 'buah',
+      factor: 1,
+      salePrice: 0,
+      discountType: 'PERCENTAGE',
+      minimumDiscount: 0,
+      maximumDiscount: 0,
+    }],
   }
 }

@@ -11,6 +11,9 @@ export interface ProductUnit {
   factor: number
   salePrice: number
   isDefault: boolean
+  discountType: 'PERCENTAGE' | 'FIXED'
+  minimumDiscount: number
+  maximumDiscount: number
 }
 
 export interface Product {

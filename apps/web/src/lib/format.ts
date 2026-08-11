@@ -12,6 +12,20 @@ export const formatQuantity = new Intl.NumberFormat('id-ID', {
   maximumFractionDigits: 3,
 }).format
 
+export function formatDiscountRange(rule: {
+  discountType: 'PERCENTAGE' | 'FIXED'
+  minimumDiscount: number
+  maximumDiscount: number
+}): string {
+  if (rule.minimumDiscount === 0 && rule.maximumDiscount === 0) {
+    return 'Tanpa diskon'
+  }
+  if (rule.discountType === 'FIXED') {
+    return `${formatCurrency(rule.minimumDiscount)}–${formatCurrency(rule.maximumDiscount)}`
+  }
+  return `${formatQuantity(rule.minimumDiscount)}%–${formatQuantity(rule.maximumDiscount)}%`
+}
+
 const dateTimeFormatters = new Map<string, Intl.DateTimeFormat>()
 
 export function formatDateTime(

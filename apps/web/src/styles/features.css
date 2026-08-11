@@ -749,12 +749,22 @@
   font-size: 0.68rem;
 }
 
-.unit-row input:not([type='radio']) {
+.unit-row input:not([type='radio']),
+.unit-row select {
   width: 100%;
   min-height: 2.6rem;
   padding: 0.5rem;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
+}
+
+.unit-row__discount {
+  display: grid;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--line);
+  grid-column: 2 / -2;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .unit-row input[type='radio'] {
@@ -978,6 +988,14 @@
 
 .unit-card > small {
   color: var(--ink-soft);
+}
+
+.unit-card > .unit-card__discount {
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--line);
+  color: var(--olive);
+  font-family: var(--font-data);
+  font-size: 0.68rem;
 }
 
 .detail-list,
@@ -1383,6 +1401,10 @@
     grid-column: 2 / -1;
   }
 
+  .unit-row__discount {
+    grid-column: 1 / -1;
+  }
+
   .receipt__row {
     grid-template-columns: minmax(0, 1fr) 0.4fr 0.7fr;
   }
@@ -1456,6 +1478,10 @@
   .unit-row label:nth-of-type(3),
   .unit-row label:nth-of-type(4) {
     grid-column: 1 / -1;
+  }
+
+  .unit-row__discount {
+    grid-template-columns: 1fr;
   }
 
   .detail-topbar {
