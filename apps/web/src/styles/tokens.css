@@ -37,5 +37,11 @@
   --radius-lg: 1.1rem;
   --shadow-float: 0 18px 45px rgb(55 46 34 / 0.12);
   --shadow-soft: 0 8px 24px rgb(55 46 34 / 0.07);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --tap-size: 3rem;
+  --content-max: 96rem;
   color-scheme: light;
 }
