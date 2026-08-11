@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Boxes, PackagePlus, Search } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { ProductInput } from '@zaina/shared'
 
@@ -14,9 +14,13 @@ import { StatusBadge } from '../../components/ui/StatusBadge.js'
 import { formatCurrency, formatQuantity, getStockLabel, getStockTone } from '../../lib/format.js'
 import { ProductForm } from './ProductForm.js'
 import { useStoreSettings } from '../../app/StoreSettingsContext.js'
+import { useConnectivity } from '../../app/ConnectivityContext.js'
+import { createSnapshot } from '../../pwa/snapshotPolicy.js'
+import type { OfflineProduct } from '../../pwa/types.js'
 
 export function ProductsPage() {
   const storeSettings = useStoreSettings()
+  const { isOffline, canWrite, readSnapshot, writeSnapshot, storeKey, lastSnapshotAt } = useConnectivity()
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('')
@@ -25,11 +29,20 @@ export function ProductsPage() {
   const categories = useQuery({
     queryKey: ['categories'],
     queryFn: () => apiRequest<Category[]>('/api/v1/categories'),
+    enabled: !isOffline,
   })
   const products = useQuery({
     queryKey: ['products'],
     queryFn: () => apiRequest<Product[]>('/api/v1/products'),
+    enabled: !isOffline,
   })
+  const [offlineProducts, setOfflineProducts] = useState<OfflineProduct[]>([])
+  useEffect(() => {
+    if (isOffline) void readSnapshot().then((snapshot) => setOfflineProducts(snapshot?.products ?? []))
+  }, [isOffline, readSnapshot])
+  useEffect(() => {
+    if (!isOffline && products.data) void writeSnapshot(createSnapshot(storeKey, products.data))
+  }, [isOffline, products.data, storeKey, writeSnapshot])
   const createProduct = useMutation({
     mutationFn: (input: ProductInput) =>
       apiRequest<Product>('/api/v1/products', { method: 'POST', ...jsonBody(input) }),
@@ -59,13 +72,15 @@ export function ProductsPage() {
     })
   }, [category, products.data, search, stockStatus])
 
+  if (isOffline) return <OfflineProducts products={offlineProducts} search={search} setSearch={setSearch} lastSnapshotAt={lastSnapshotAt} />
+
   return (
     <div className="page-stack products-page">
       <PageHeader
         eyebrow="Katalog"
         title="Barang di setiap rak"
         description="Kelola identitas barang, satuan jual, harga, lokasi, dan batas stok."
-        actions={<Button icon={<PackagePlus />} disabled={!categories.data?.length} onClick={() => setFormOpen(true)}>Tambah barang</Button>}
+        actions={<Button icon={<PackagePlus />} disabled={!categories.data?.length || !canWrite} disabledReason={!canWrite ? 'Sambungkan koneksi untuk menambah barang' : undefined} onClick={() => setFormOpen(true)}>Tambah barang</Button>}
       />
 
       <div className="filter-bar">
@@ -108,6 +123,28 @@ export function ProductsPage() {
           onCancel={() => setFormOpen(false)}
         />
       </Modal>
+    </div>
+  )
+}
+
+function OfflineProducts({
+  products,
+  search,
+  setSearch,
+  lastSnapshotAt,
+}: {
+  products: OfflineProduct[]
+  search: string
+  setSearch: (value: string) => void
+  lastSnapshotAt: string | null
+}) {
+  const normalized = search.trim().toLocaleLowerCase('id-ID')
+  const filtered = products.filter((product) => !normalized || product.name.toLocaleLowerCase('id-ID').includes(normalized) || product.sku.toLocaleLowerCase('id-ID').includes(normalized))
+  return (
+    <div className="page-stack products-page">
+      <PageHeader eyebrow="Katalog baca saja" title="Barang tersimpan" description={`Offline${lastSnapshotAt ? ` · snapshot ${new Date(lastSnapshotAt).toLocaleString('id-ID')}` : ''}. Harga modal dan aksi tulis tidak disimpan di perangkat.`} />
+      <label className="filter-search"><Search aria-hidden="true" /><input aria-label="Cari barang" type="search" placeholder="Cari nama atau SKU…" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
+      {filtered.length ? <div className="offline-product-grid">{filtered.map((product) => <Link className="data-card" to={`/products/${product.id}`} key={product.id}><span className="table-product"><i /><span><strong>{product.name}</strong><small>{product.sku} · {product.category}</small></span></span><span><strong>{formatCurrency(product.salePrice)}</strong><small>per {product.baseUnit}</small></span><span><strong>{formatQuantity(product.balance)}</strong><small>{product.baseUnit} · {getStockLabel(product.stockStatus)}</small></span><small>Diskon {product.minimumDiscountPercent}%–{product.maximumDiscountPercent}%</small></Link>)}</div> : <EmptyState title="Barang tidak ditemukan" description="Ubah kata pencarian untuk melihat snapshot lain." />}
     </div>
   )
 }

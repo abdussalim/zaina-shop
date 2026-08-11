@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Archive, ArrowLeft, Edit3, PackagePlus, TriangleAlert } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import type { ProductInput } from '@zaina/shared'
 
@@ -14,21 +14,24 @@ import { formatCurrency, formatDateTime, formatDiscountRange, formatQuantity, ge
 import { MovementForm } from '../inventory/MovementForm.js'
 import { ProductForm } from './ProductForm.js'
 import { useStoreSettings } from '../../app/StoreSettingsContext.js'
+import { useConnectivity } from '../../app/ConnectivityContext.js'
+import type { OfflineProduct } from '../../pwa/types.js'
 
 export function ProductDetailPage() {
   const storeSettings = useStoreSettings()
+  const { isOffline, readSnapshot, lastSnapshotAt } = useConnectivity()
   const { id = '' } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [editOpen, setEditOpen] = useState(false)
   const [movementType, setMovementType] = useState<'RECEIPT' | 'DAMAGE'>()
   const [archiveOpen, setArchiveOpen] = useState(false)
-  const product = useQuery({ queryKey: ['products', id], queryFn: () => apiRequest<Product>(`/api/v1/products/${id}`), enabled: Boolean(id) })
-  const categories = useQuery({ queryKey: ['categories'], queryFn: () => apiRequest<Category[]>('/api/v1/categories') })
+  const product = useQuery({ queryKey: ['products', id], queryFn: () => apiRequest<Product>(`/api/v1/products/${id}`), enabled: Boolean(id) && !isOffline })
+  const categories = useQuery({ queryKey: ['categories'], queryFn: () => apiRequest<Category[]>('/api/v1/categories'), enabled: !isOffline })
   const movements = useInfiniteQuery({
     queryKey: ['inventory', 'movements', id],
     initialPageParam: null as string | null,
-    enabled: Boolean(id),
+    enabled: Boolean(id) && !isOffline,
     queryFn: ({ pageParam }) => {
       const query = new URLSearchParams({ productId: id, limit: '100' })
       if (pageParam) query.set('cursor', pageParam)
@@ -36,6 +39,10 @@ export function ProductDetailPage() {
     },
     getNextPageParam: (page) => page.nextCursor ?? undefined,
   })
+  const [offlineProduct, setOfflineProduct] = useState<OfflineProduct | null>(null)
+  useEffect(() => {
+    if (isOffline) void readSnapshot().then((snapshot) => setOfflineProduct(snapshot?.products.find((item) => item.id === id) ?? null))
+  }, [id, isOffline, readSnapshot])
 
   const update = useMutation({
     mutationFn: (input: ProductInput) => apiRequest<Product>(`/api/v1/products/${id}`, { method: 'PATCH', ...jsonBody(input) }),
@@ -62,6 +69,7 @@ export function ProductDetailPage() {
     },
   })
 
+  if (isOffline) return <OfflineProductDetail product={offlineProduct} updatedAt={lastSnapshotAt} />
   if (product.isPending) return <LoadingState label="Membuka kartu barang" />
   if (product.isError) return <EmptyState title="Barang tidak ditemukan" description="Barang mungkin sudah dipindahkan atau alamat tidak tepat." action={<Link className="button button--secondary button--medium" to="/products">Kembali ke barang</Link>} />
   const item = product.data
@@ -161,6 +169,17 @@ export function ProductDetailPage() {
         <p className="modal-copy">Arsipkan <strong>{item.name}</strong> hanya setelah saldo stoknya nol.</p>
         {archive.error ? <div className="form-alert" role="alert">{archive.error instanceof ApiClientError ? archive.error.message : 'Barang belum dapat diarsipkan.'}</div> : null}
       </Modal>
+    </div>
+  )
+}
+
+function OfflineProductDetail({ product, updatedAt }: { product: OfflineProduct | null; updatedAt: string | null }) {
+  if (!product) return <EmptyState title="Barang tidak ada di snapshot" description="Buka detail ini saat online untuk menyimpannya di perangkat." action={<Link className="button button--secondary" to="/products">Kembali ke barang</Link>} />
+  return (
+    <div className="page-stack product-detail">
+      <div className="detail-topbar"><Link to="/products" className="back-link"><ArrowLeft /> Semua barang</Link><StatusBadge tone="info">Baca saja</StatusBadge></div>
+      <section className="product-hero"><div className="product-hero__identity"><span className="category-stamp">{product.category}</span><h1>{product.name}</h1><p>{product.sku} · {product.location ?? 'Lokasi rak belum diisi'}</p></div><div className="product-hero__stock"><span>Saldo snapshot</span><strong>{formatQuantity(product.balance)}</strong><small>{product.baseUnit}</small><StatusBadge tone={getStockTone(product.stockStatus)}>{getStockLabel(product.stockStatus)}</StatusBadge></div></section>
+      <div className="detail-grid"><section className="detail-panel"><div className="section-heading"><div><p className="eyebrow">Harga & diskon</p><h2>Informasi katalog</h2></div></div><dl className="detail-list"><div><dt>Harga jual</dt><dd>{formatCurrency(product.salePrice)} / {product.baseUnit}</dd></div><div><dt>Diskon minimum</dt><dd>{product.minimumDiscountPercent}%</dd></div><div><dt>Diskon maksimum</dt><dd>{product.maximumDiscountPercent}%</dd></div><div><dt>Batas minimum</dt><dd>{formatQuantity(product.minimumStock)} {product.baseUnit}</dd></div></dl></section><aside className="offline-state"><strong>Perubahan dinonaktifkan</strong><p>Harga modal, mutasi, dan aksi edit tidak disimpan di snapshot offline.</p>{updatedAt ? <small>Snapshot: {new Date(updatedAt).toLocaleString('id-ID')}</small> : null}</aside></div>
     </div>
   )
 }

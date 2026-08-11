@@ -73,6 +73,8 @@ export function ProductForm({
   product,
   defaultMinimumStock = 5,
   pending,
+  canWrite = true,
+  disabledReason,
   serverError,
   onSubmit,
   onCancel,
@@ -81,6 +83,8 @@ export function ProductForm({
   product?: Product | undefined
   defaultMinimumStock?: number | undefined
   pending: boolean
+  canWrite?: boolean
+  disabledReason?: string
   serverError?: string | undefined
   onSubmit: (input: ProductInput) => void
   onCancel: () => void
@@ -113,6 +117,7 @@ export function ProductForm({
 
   return (
     <form className="form-stack" onSubmit={form.handleSubmit(submit)} noValidate>
+      <fieldset disabled={!canWrite} className="form-stack form-fieldset">
       <div className="form-grid form-grid--2">
         <label className="form-field"><span>Nama barang</span><input {...form.register('name')} />{form.formState.errors.name ? <small className="field__message--error">{form.formState.errors.name.message}</small> : null}</label>
         <label className="form-field"><span>Kategori</span><select {...form.register('categoryId')}>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select>{form.formState.errors.categoryId ? <small className="field__message--error">{form.formState.errors.categoryId.message}</small> : null}</label>
@@ -152,9 +157,10 @@ export function ProductForm({
       </section>
 
       {serverError ? <div className="form-alert" role="alert">{serverError}</div> : null}
+      </fieldset>
       <div className="form-actions">
         <Button type="button" variant="ghost" onClick={onCancel}>Batal</Button>
-        <Button type="submit" pending={pending}>{product ? 'Simpan perubahan' : 'Tambah barang'}</Button>
+        <Button type="submit" pending={pending} disabled={!canWrite} disabledReason={disabledReason}>{product ? 'Simpan perubahan' : 'Tambah barang'}</Button>
       </div>
     </form>
   )

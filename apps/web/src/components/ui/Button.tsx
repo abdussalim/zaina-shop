@@ -6,7 +6,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: 'small' | 'medium' | 'large'
   pending?: boolean
   icon?: ReactNode
-  disabledReason?: string
+  disabledReason?: string | undefined
 }
 
 export function Button({

@@ -4,6 +4,7 @@ import { createIndexedDbSnapshotStore } from '../pwa/snapshotStore.js'
 import type { InventorySnapshot, SnapshotStore } from '../pwa/types.js'
 
 export interface ConnectivityContextValue {
+  storeKey: string
   status: ConnectivityStatus
   isOffline: boolean
   canWrite: boolean
@@ -18,6 +19,7 @@ export interface ConnectivityContextValue {
 const ConnectivityContext = createContext<ConnectivityContextValue | null>(null)
 
 const fallbackConnectivity: ConnectivityContextValue = {
+  storeKey: 'anonymous',
   status: 'online',
   isOffline: false,
   canWrite: true,
@@ -91,6 +93,7 @@ export function ConnectivityProvider({
 
   const value = useMemo<ConnectivityContextValue>(
     () => ({
+      storeKey,
       status,
       isOffline: status === 'offline',
       canWrite: status === 'online',

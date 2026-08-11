@@ -20,12 +20,16 @@ export function MovementForm({
   products,
   initialProductId,
   initialType = 'RECEIPT',
+  canWrite = true,
+  disabledReason,
   onSuccess,
   onCancel,
 }: {
   products: Product[]
   initialProductId?: string | undefined
   initialType?: (typeof movementOptions)[number][0]
+  canWrite?: boolean
+  disabledReason?: string
   onSuccess: (movement: StockMovement) => void
   onCancel: () => void
 }) {
@@ -110,6 +114,7 @@ export function MovementForm({
         if (valid) mutation.mutate()
       }}
     >
+      <fieldset disabled={!canWrite} className="form-stack form-fieldset">
       <div className="form-grid form-grid--2">
         <label className="form-field"><span>Jenis mutasi</span><select value={type} onChange={(event) => setType(event.target.value as typeof type)}>{movementOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
         <label className="form-field"><span>Barang</span><select value={product?.id ?? ''} onChange={(event) => chooseProduct(event.target.value)}>{products.map((item) => <option key={item.id} value={item.id}>{item.name} · {item.sku}</option>)}</select></label>
@@ -122,8 +127,9 @@ export function MovementForm({
       </div>
       <label className="form-field"><span>{reasonRequired ? 'Alasan / catatan' : 'Catatan (opsional)'}</span><textarea rows={3} required={reasonRequired} value={note} onChange={(event) => setNote(event.target.value)} placeholder={reasonRequired ? 'Jelaskan alasan agar riwayat mudah diaudit' : 'Nama pemasok atau keterangan lain'} /></label>
       {product && unit ? <div className="conversion-note"><strong>{formatQuantity(quantity)} {unit.name}</strong><span>akan mengubah stok sebesar {formatQuantity(quantity * unit.factor)} {product.baseUnit}</span></div> : null}
+      </fieldset>
       {mutation.error ? <div className="form-alert" role="alert">{mutation.error instanceof ApiClientError ? mutation.error.message : 'Mutasi stok belum dapat disimpan.'}</div> : null}
-      <div className="form-actions"><Button type="button" variant="ghost" onClick={onCancel}>Batal</Button><Button type="submit" pending={mutation.isPending} disabled={!valid}>Simpan mutasi</Button></div>
+      <div className="form-actions"><Button type="button" variant="ghost" onClick={onCancel}>Batal</Button><Button type="submit" pending={mutation.isPending} disabled={!valid || !canWrite} disabledReason={disabledReason}>{canWrite ? 'Simpan mutasi' : 'Offline - sambungkan koneksi'}</Button></div>
     </form>
   )
 }

@@ -12,17 +12,20 @@ import { EmptyState, LoadingState } from '../../components/ui/States.js'
 import { StatusBadge } from '../../components/ui/StatusBadge.js'
 import { formatCurrency, formatDateTime, formatQuantity, movementLabels } from '../../lib/format.js'
 import { useStoreSettings } from '../../app/StoreSettingsContext.js'
+import { useConnectivity } from '../../app/ConnectivityContext.js'
+import type { OfflineProduct } from '../../pwa/types.js'
 import { MovementForm } from './MovementForm.js'
 
 type FormType = 'RECEIPT' | 'DAMAGE' | 'ADJUSTMENT_IN' | 'ADJUSTMENT_OUT'
 
 export function InventoryPage() {
   const storeSettings = useStoreSettings()
+  const { isOffline, canWrite, readSnapshot, lastSnapshotAt } = useConnectivity()
   const [searchParams, setSearchParams] = useSearchParams()
   const [formType, setFormType] = useState<FormType>()
   const [productFilter, setProductFilter] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
-  const products = useQuery({ queryKey: ['products'], queryFn: () => apiRequest<Product[]>('/api/v1/products') })
+  const products = useQuery({ queryKey: ['products'], queryFn: () => apiRequest<Product[]>('/api/v1/products'), enabled: !isOffline })
   const movements = useInfiniteQuery({
     queryKey: ['inventory', 'movements', productFilter, typeFilter],
     initialPageParam: null as string | null,
@@ -34,8 +37,13 @@ export function InventoryPage() {
       return apiRequest<StockMovementPage>(`/api/v1/inventory/movements?${query}`)
     },
     getNextPageParam: (page) => page.nextCursor ?? undefined,
+    enabled: !isOffline,
   })
-  const summary = useQuery({ queryKey: ['inventory', 'summary'], queryFn: () => apiRequest<{ totalProducts: number; inventoryValue: number; lowStockCount: number; outOfStockCount: number }>('/api/v1/inventory/summary') })
+  const summary = useQuery({ queryKey: ['inventory', 'summary'], queryFn: () => apiRequest<{ totalProducts: number; inventoryValue: number; lowStockCount: number; outOfStockCount: number }>('/api/v1/inventory/summary'), enabled: !isOffline })
+  const [offlineProducts, setOfflineProducts] = useState<OfflineProduct[]>([])
+  useEffect(() => {
+    if (isOffline) void readSnapshot().then((snapshot) => setOfflineProducts(snapshot?.products ?? []))
+  }, [isOffline, readSnapshot])
 
   useEffect(() => {
     const action = searchParams.get('action')
@@ -44,6 +52,8 @@ export function InventoryPage() {
   }, [searchParams])
 
   const filtered = movements.data?.pages.flatMap((page) => page.items) ?? []
+
+  if (isOffline) return <OfflineInventory products={offlineProducts} updatedAt={lastSnapshotAt} />
 
   function closeForm() {
     setFormType(undefined)
@@ -58,8 +68,8 @@ export function InventoryPage() {
         description="Setiap perubahan dicatat sebagai jejak yang tidak menghapus riwayat sebelumnya."
         actions={
           <>
-            <Button variant="secondary" icon={<TriangleAlert />} onClick={() => setFormType('DAMAGE')}>Barang pecah</Button>
-            <Button icon={<ArrowDownToLine />} onClick={() => setFormType('RECEIPT')}>Terima stok</Button>
+            <Button variant="secondary" icon={<TriangleAlert />} disabled={!canWrite} disabledReason="Sambungkan koneksi untuk mengubah stok" onClick={() => setFormType('DAMAGE')}>Barang pecah</Button>
+            <Button icon={<ArrowDownToLine />} disabled={!canWrite} disabledReason="Sambungkan koneksi untuk mengubah stok" onClick={() => setFormType('RECEIPT')}>Terima stok</Button>
           </>
         }
       />
@@ -127,6 +137,18 @@ export function InventoryPage() {
           />
         ) : <LoadingState />}
       </Modal>
+    </div>
+  )
+}
+
+function OfflineInventory({ products, updatedAt }: { products: OfflineProduct[]; updatedAt: string | null }) {
+  const low = products.filter((product) => product.stockStatus === 'LOW').length
+  const out = products.filter((product) => product.stockStatus === 'OUT_OF_STOCK').length
+  return (
+    <div className="page-stack inventory-page">
+      <PageHeader eyebrow="Stok baca saja" title="Saldo stok terakhir" description={`Mutasi dinonaktifkan saat offline${updatedAt ? ` · snapshot ${new Date(updatedAt).toLocaleString('id-ID')}` : ''}.`} />
+      <section className="compact-metrics"><article><span>Total barang</span><strong>{products.length}</strong></article><article className="compact-metrics__warn"><span>Stok tipis</span><strong>{low}</strong></article><article className="compact-metrics__danger"><span>Stok habis</span><strong>{out}</strong></article></section>
+      <section className="ledger-section"><div className="section-heading"><div><p className="eyebrow">Snapshot</p><h2>Saldo per barang</h2></div><StatusBadge tone="info">Baca saja</StatusBadge></div>{products.length ? <div className="offline-product-grid">{products.map((product) => <Link className="data-card" to={`/products/${product.id}`} key={product.id}><span className="table-product"><i /><span><strong>{product.name}</strong><small>{product.sku} · {product.location ?? 'Lokasi belum diisi'}</small></span></span><span><strong>{formatQuantity(product.balance)}</strong><small>{product.baseUnit}</small></span><StatusBadge tone={product.stockStatus === 'OUT_OF_STOCK' ? 'danger' : product.stockStatus === 'LOW' ? 'warning' : 'success'}>{product.stockStatus === 'OUT_OF_STOCK' ? 'Habis' : product.stockStatus === 'LOW' ? 'Tipis' : 'Aman'}</StatusBadge></Link>)}</div> : <EmptyState title="Snapshot stok belum tersedia" description="Buka halaman ini saat online untuk menyimpan saldo terakhir." />}</section>
     </div>
   )
 }
