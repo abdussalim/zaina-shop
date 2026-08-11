@@ -21,9 +21,11 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "oxlint --deny-warnings --react-plugin --vitest-plugin --jsx-a11y-plugin --import-plugin .",
     "budget:web": "npm run build --workspace @zaina/web",
-    "budget:web:check": "node scripts/check-web-budget.mjs apps/web/dist"
+    "budget:web:check": "node scripts/check-web-budget.mjs apps/web/dist",
+    "test:e2e": "playwright test"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
     "concurrently": "latest",
     "oxlint": "^1.77.0",
     "typescript": "7.0.2",

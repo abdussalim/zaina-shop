@@ -6,7 +6,7 @@ export function OfflineBoundary({ allowOffline, children }: { allowOffline: bool
   const { isOffline, lastSnapshotAt } = useConnectivity()
   if (!isOffline || allowOffline) return <>{children}</>
   return (
-    <section className="offline-state" role="status" aria-live="polite">
+    <section className="offline-state" aria-live="polite" aria-atomic="true">
       <CloudOff aria-hidden="true" />
       <strong>Koneksi diperlukan</strong>
       <p>Halaman ini tidak menyimpan data bisnis offline. Sambungkan perangkat untuk melanjutkan.</p>

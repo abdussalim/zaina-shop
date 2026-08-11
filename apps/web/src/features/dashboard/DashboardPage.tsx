@@ -165,7 +165,7 @@ function OfflineDashboard({ snapshot, updatedAt }: { snapshot: InventorySnapshot
         title="Stok terakhir tersimpan"
         description="Ringkasan keuangan, laporan, dan aksi tulis disembunyikan saat offline. Data ini mungkin usang."
       />
-      <div className="offline-banner" role="status">Snapshot katalog dan saldo stok {updatedAt ? `diperbarui ${new Date(updatedAt).toLocaleString('id-ID')}` : 'belum tersedia'}.</div>
+      <div className="offline-banner" aria-live="polite" aria-atomic="true">Snapshot katalog dan saldo stok {updatedAt ? `diperbarui ${new Date(updatedAt).toLocaleString('id-ID')}` : 'belum tersedia'}.</div>
       <section className="metric-rail" aria-label="Ringkasan stok offline">
         <Metric label="Barang tersimpan" value={formatQuantity(products.length)} icon={Boxes} />
         <Metric label="Stok perlu cek" value={formatQuantity(attention.length)} icon={TriangleAlert} />

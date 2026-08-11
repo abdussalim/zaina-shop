@@ -104,7 +104,7 @@ export function ConnectivityProvider({
       readSnapshot,
       writeSnapshot,
     }),
-    [clearSnapshot, lastSnapshotAt, readSnapshot, refreshSnapshot, status, store, writeSnapshot],
+    [clearSnapshot, lastSnapshotAt, readSnapshot, refreshSnapshot, status, store, storeKey, writeSnapshot],
   )
   return <ConnectivityContext.Provider value={value}>{children}</ConnectivityContext.Provider>
 }

@@ -139,7 +139,7 @@ export function SalesPage() {
         title="Penjualan baru"
         description="Pilih barang dari rak digital, tentukan satuan, lalu selesaikan pembayaran."
       />
-      {isOffline ? <div className="offline-banner" role="status">Offline. Keranjang tetap di layar, tetapi checkout membutuhkan koneksi server.</div> : null}
+      {isOffline ? <div className="offline-banner" aria-live="polite" aria-atomic="true">Offline. Keranjang tetap di layar, tetapi checkout membutuhkan koneksi server.</div> : null}
       <div className="sales-workspace">
         <section className="sales-catalog">
           <div className="catalog-search">

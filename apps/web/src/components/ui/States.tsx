@@ -48,5 +48,5 @@ export function OfflineState({
   title?: string
   description?: string
 }) {
-  return <div className="offline-state" role="status"><CloudOff aria-hidden="true" /><strong>{title}</strong><p>{description}</p></div>
+  return <div className="offline-state" aria-live="polite" aria-atomic="true"><CloudOff aria-hidden="true" /><strong>{title}</strong><p>{description}</p></div>
 }

@@ -2,6 +2,11 @@
 
 Panduan ini memakai `compose.production.yaml`. PostgreSQL dan API tidak membuka port publik; web hanya bind ke `127.0.0.1:8080` dan harus ditempatkan di belakang terminasi HTTPS milik VPS.
 
+Frontend dibangun sebagai PWA mobile-first. HTTPS wajib untuk service worker di perangkat
+nyata (localhost adalah pengecualian). Cache bisnis offline hanya berisi katalog dan saldo
+stok terakhir yang sudah disanitasi; laporan, nota, akun, kredensial, token, dan request
+mutasi tidak pernah masuk Cache Storage maupun IndexedDB.
+
 ## 1. Persyaratan
 
 - VPS Linux 64-bit dengan minimal 2 GB RAM dan ruang disk yang dipantau.
@@ -49,6 +54,22 @@ docker compose --env-file .env -f compose.production.yaml up -d
 docker compose --env-file .env -f compose.production.yaml ps
 ```
 
+Sebelum membuat image produksi, jalankan quality gate dari checkout yang bersih:
+
+```bash
+npm ci
+npm test
+npm run typecheck
+npm run lint
+npm run build
+npm run budget:web:check
+npm run test:e2e
+```
+
+Playwright memakai matrix 320, 360, 430, 768, 1024, dan 1366 px untuk memeriksa
+overflow horizontal, target sentuh 48 px, manifest, serta kebijakan offline. Acceptance
+yang menulis ledger hanya boleh diarahkan ke staging atau database sekali pakai.
+
 API menjalankan migrasi yang belum diterapkan dan membuat akun/kategori awal sebelum menerima trafik. Tunggu sampai ketiga service berstatus sehat:
 
 ```bash
@@ -95,6 +116,11 @@ Smoke test produksi bersifat baca-saja terhadap data usaha: hanya sesi login sem
 
 Setelah login pertama, ubah kata sandi melalui Pengaturan. Perubahan kata sandi di `.env` setelah akun dibuat tidak mengubah akun yang sudah tersimpan.
 
+Setelah login di Android, gunakan menu browser Tambahkan ke layar utama. Saat koneksi
+putus, banner offline dan waktu snapshot harus terlihat. Tombol penerimaan, barang pecah,
+checkout, pembatalan, laporan, nota, dan pengaturan harus disabled atau menampilkan state
+koneksi; jangan menganggap saldo snapshot sebagai saldo terkini.
+
 ## Upgrade aplikasi
 
 ```bash
@@ -104,6 +130,11 @@ docker compose --env-file .env -f compose.production.yaml build --pull
 docker compose --env-file .env -f compose.production.yaml up -d
 docker compose --env-file .env -f compose.production.yaml ps
 ```
+
+Service worker menunda update sampai pengguna memilih Muat ulang; jangan memaksa reload
+ketika kasir sedang mengisi keranjang. Jika rollback diperlukan, kembalikan image frontend
+sebelumnya dan ulangi healthcheck/smoke test. Snapshot lama akan diganti saat koneksi pulih
+atau dihapus ketika sesi berakhir.
 
 Jalankan healthcheck dan smoke test baca-saja setelah setiap upgrade. Jangan mengganti major image PostgreSQL hanya dengan mengubah tag; lakukan backup teruji dan prosedur `pg_upgrade` sesuai dokumentasi PostgreSQL.
 

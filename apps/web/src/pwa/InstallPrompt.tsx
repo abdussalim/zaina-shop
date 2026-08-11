@@ -19,7 +19,7 @@ export function InstallPrompt() {
   }, [])
   if (!installEvent) return null
   return (
-    <aside className="pwa-prompt" role="status" aria-live="polite">
+    <aside className="pwa-prompt" aria-live="polite" aria-atomic="true">
       <div>
         <strong>Pasang Toko Zaina</strong>
         <span>Buka inventaris lebih cepat dari layar utama.</span>

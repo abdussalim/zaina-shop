@@ -6,7 +6,6 @@ import {
   MoreHorizontal,
   PackageSearch,
   ShoppingBasket,
-  Settings,
   BarChart3,
 } from 'lucide-react'
 import { NavLink, Outlet } from 'react-router-dom'

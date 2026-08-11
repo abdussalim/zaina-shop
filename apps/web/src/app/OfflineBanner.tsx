@@ -6,7 +6,7 @@ export function OfflineBanner() {
   const { isOffline, status, lastSnapshotAt, refreshSnapshot } = useConnectivity()
   if (!isOffline && status !== 'checking') return null
   return (
-    <div className="offline-banner" role="status" aria-live="polite">
+    <div className="offline-banner" aria-live="polite" aria-atomic="true">
       <CloudOff aria-hidden="true" />
       <span>
         {status === 'checking' ? 'Memeriksa koneksi…' : 'Offline. Katalog dan stok memakai snapshot terakhir.'}

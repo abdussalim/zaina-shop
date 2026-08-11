@@ -274,7 +274,7 @@ h2 {
 .field--error input { border-color: var(--danger); }
 .field__control:has(.field__trailing) input { padding-right: 3.15rem; }
 .field__trailing { position: absolute; top: 50%; right: 0.25rem; transform: translateY(-50%); }
-.field__reveal { display: grid; width: 2.5rem; height: 2.5rem; padding: 0; place-items: center; border: 0; background: transparent; color: var(--ink-soft); cursor: pointer; }
+.field__reveal { display: grid; width: var(--tap-size); height: var(--tap-size); padding: 0; place-items: center; border: 0; background: transparent; color: var(--ink-soft); cursor: pointer; }
 .field__message { margin: 0; color: var(--ink-soft); font-size: 0.77rem; }
 .field__message--error { color: var(--danger); }
 

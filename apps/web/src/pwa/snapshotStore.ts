@@ -1,5 +1,5 @@
 import { isInventorySnapshot } from './snapshotPolicy.js'
-import type { InventorySnapshot, SnapshotStore } from './types.js'
+import type { SnapshotStore } from './types.js'
 
 const DEFAULT_DB_NAME = 'zaina-offline-v1'
 const STORE_NAME = 'inventory-snapshots'

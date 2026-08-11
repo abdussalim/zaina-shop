@@ -12,7 +12,7 @@ export function UpdatePrompt({
 }) {
   if (!open) return null
   return (
-    <aside className="pwa-prompt" role="status" aria-live="polite">
+    <aside className="pwa-prompt" aria-live="polite" aria-atomic="true">
       <div>
         <strong>Versi baru siap</strong>
         <span>Pembaruan ditunda sampai Anda memilih muat ulang.</span>

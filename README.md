@@ -11,6 +11,8 @@ Aplikasi inventaris dan kasir sederhana untuk toko perabotan rumah serta pecah b
 - Kasir dengan diskon per baris barang, kembalian, cetak nota, pembatalan transaksi, dan perlindungan retry agar transaksi tidak ganda.
 - Laporan penjualan/persediaan dan ekspor CSV yang aman dibuka di spreadsheet.
 - Pengaturan identitas toko, zona waktu WIB/WITA/WIT, batas stok default, dan kata sandi.
+- PWA mobile-first: dapat dipasang di Android/desktop, app shell tetap terbuka offline,
+  dan katalog serta saldo stok terakhir tersedia sebagai baca-saja dengan timestamp.
 - Docker Compose PostgreSQL 18, healthcheck, backup/restore, smoke test produksi baca-saja, dan acceptance test staging.
 
 ## Menjalankan cepat dengan Docker
@@ -54,6 +56,8 @@ npm test
 npm run lint
 npm run typecheck
 npm run build
+node scripts/check-web-budget.mjs apps/web/dist
+npm run test:e2e
 node scripts/smoke-test.mjs --help
 node scripts/acceptance-test.mjs --help
 ```
@@ -73,6 +77,13 @@ ACCEPTANCE_USERNAME=toko ACCEPTANCE_PASSWORD='kata-sandi-anda' \
 ```
 
 Acceptance test meninggalkan jejak penerimaan dan penjualan yang memang tidak boleh dihapus dari ledger. Jangan menjalankannya pada produksi.
+
+### Batas offline
+
+Offline hanya mencakup aset app shell dan snapshot katalog plus saldo stok terakhir.
+Harga modal, laporan, nota, akun, kredensial, token, mutasi, checkout, dan pengaturan
+selalu membutuhkan koneksi. Tidak ada antrean tulis atau sinkronisasi transaksi tertunda.
+Logout atau sesi kedaluwarsa menghapus snapshot bisnis lokal.
 
 ## Deployment dan operasional
 
