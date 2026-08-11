@@ -5,10 +5,10 @@ Aplikasi inventaris dan kasir sederhana untuk toko perabotan rumah serta pecah b
 ## Fitur
 
 - Dashboard omzet, laba kotor, nilai persediaan, stok tipis, dan aktivitas terbaru.
-- Katalog barang dengan kategori, SKU/barcode, lokasi rak, harga modal/jual, serta stok minimum.
-- Multi-satuan, misalnya `1 lusin = 12 buah`, dengan harga jual per kemasan.
+- Katalog barang dengan kategori, SKU/barcode, lokasi rak, harga modal, harga jual, serta stok minimum.
+- Multi-satuan, misalnya `1 lusin = 12 buah`, dengan harga jual dan rentang diskon persen atau nominal untuk setiap satuan.
 - Ledger stok untuk stok awal, penerimaan, kerusakan/pecah, retur, dan penyesuaian.
-- Kasir, kembalian, cetak nota, pembatalan transaksi, dan perlindungan retry agar transaksi tidak ganda.
+- Kasir dengan diskon per baris barang, kembalian, cetak nota, pembatalan transaksi, dan perlindungan retry agar transaksi tidak ganda.
 - Laporan penjualan/persediaan dan ekspor CSV yang aman dibuka di spreadsheet.
 - Pengaturan identitas toko, zona waktu WIB/WITA/WIT, batas stok default, dan kata sandi.
 - Docker Compose PostgreSQL 18, healthcheck, backup/restore, smoke test produksi baca-saja, dan acceptance test staging.

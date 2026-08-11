@@ -30,7 +30,10 @@ schema_migrations (applied migration ledger)
 - Harga memakai `BIGINT` Rupiah; kuantitas memakai `NUMERIC(18,3)`.
 - `inventory_balances.quantity_base` tidak boleh negatif.
 - `stock_movements` bersifat append-only pada layer aplikasi dan menyimpan faktor satuan saat transaksi.
-- Penjualan menyimpan snapshot nama, faktor, harga jual, dan harga modal pada `sale_items`.
+- `product_units` menyimpan harga jual serta satu rule diskon aktif per satuan: tipe `PERCENTAGE` atau `FIXED`, nilai minimum, dan nilai maksimum. Nilai nol selalu boleh; diskon nominal tidak boleh melebihi harga jual satuan.
+- Penjualan menyimpan snapshot nama, faktor, harga jual, harga modal, rule diskon, nilai diskon yang dipilih, jumlah potongan, dan total bersih pada `sale_items`.
+- Perubahan rule pada katalog tidak mengubah nota lama karena perhitungan penjualan selalu dibaca dari snapshot `sale_items`.
+- Baris transaksi lama dimigrasikan dengan diskon item nol dan total bersih sama dengan subtotal. Nilai diskon serta total historis pada header `sales` tidak diubah.
 - Penjualan selesai atau batal divalidasi oleh check constraint yang saling eksklusif.
 - Produk yang pernah digunakan dinonaktifkan, bukan dihapus; foreign key memakai `RESTRICT`.
 
@@ -44,7 +47,9 @@ schema_migrations (applied migration ledger)
 
 ## Migrasi dan rollback
 
-- Up: `apps/api/src/db/migrations/001_initial.sql`
+- Up awal: `apps/api/src/db/migrations/001_initial.sql`
+- Up snapshot mutasi: `apps/api/src/db/migrations/002_movement_snapshots.sql`
+- Up diskon per satuan: `apps/api/src/db/migrations/003_unit_discounts.sql`
 - Down: `apps/api/src/db/migrations/001_initial.down.sql`
 - Runner mencatat file yang berhasil pada `schema_migrations` dalam transaksi yang sama.
 - Rollback bersifat destruktif dan hanya dipakai pada database kosong atau hasil backup yang sudah diverifikasi.

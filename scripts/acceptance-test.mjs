@@ -72,13 +72,34 @@ const product = await post('/api/v1/products', {
   salePrice: 10_000,
   minimumStock: 2,
   units: [
-    { name: 'buah', factor: 1, salePrice: 10_000, isDefault: true },
-    { name: 'lusin', factor: 12, salePrice: 84_000, isDefault: false },
+    {
+      name: 'buah',
+      factor: 1,
+      salePrice: 10_000,
+      isDefault: true,
+      discountType: 'PERCENTAGE',
+      minimumDiscount: 5,
+      maximumDiscount: 20,
+    },
+    {
+      name: 'lusin',
+      factor: 12,
+      salePrice: 84_000,
+      isDefault: false,
+      discountType: 'FIXED',
+      minimumDiscount: 5_000,
+      maximumDiscount: 10_000,
+    },
   ],
 })
 const piece = product.units.find((unit) => unit.name === 'buah')
 const dozen = product.units.find((unit) => unit.name === 'lusin')
 assert.ok(piece && dozen, 'Satuan buah dan lusin harus dibuat')
+assert.equal(product.costPrice, 7_000)
+assert.equal(piece.salePrice, 10_000)
+assert.equal(piece.discountType, 'PERCENTAGE')
+assert.equal(piece.minimumDiscount, 5)
+assert.equal(piece.maximumDiscount, 20)
 
 await post('/api/v1/inventory/movements', {
   idempotencyKey: randomUUID(),
@@ -93,11 +114,19 @@ assert.equal((await request(`/api/v1/products/${product.id}`)).balanceBase, 12)
 
 const sale = await post('/api/v1/sales', {
   idempotencyKey: randomUUID(),
-  discount: 0,
-  amountPaid: 20_000,
+  amountPaid: 18_000,
   note: 'Acceptance test penjualan',
-  items: [{ productId: product.id, unitId: piece.id, quantity: 2 }],
+  items: [{ productId: product.id, unitId: piece.id, quantity: 2, discountValue: 10 }],
 })
+assert.equal(sale.subtotal, 20_000)
+assert.equal(sale.discount, 2_000)
+assert.equal(sale.total, 18_000)
+assert.equal(sale.items[0].discountTypeSnapshot, 'PERCENTAGE')
+assert.equal(sale.items[0].minimumDiscountSnapshot, 5)
+assert.equal(sale.items[0].maximumDiscountSnapshot, 20)
+assert.equal(sale.items[0].discountValue, 10)
+assert.equal(sale.items[0].discountAmount, 2_000)
+assert.equal(sale.items[0].total, 18_000)
 assert.equal((await request(`/api/v1/products/${product.id}`)).balanceBase, 10)
 
 const dashboard = await request('/api/v1/dashboard')
