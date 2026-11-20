@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Minus, Plus, Search, ShoppingBasket, Trash2, X } from 'lucide-react'
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { calculateSaleLineTotals, getDiscountValidationMessage } from '@zaina/shared'
 
@@ -30,6 +30,16 @@ export function SalesPage() {
   const [note, setNote] = useState('')
   const [checkoutError, setCheckoutError] = useState<string>()
   const [mobileCartOpen, setMobileCartOpen] = useState(false)
+
+  useEffect(() => {
+    if (mobileCartOpen) {
+      const prevOverflow = document.body.style.overflow
+      document.body.style.overflow = 'hidden'
+      return () => {
+        document.body.style.overflow = prevOverflow
+      }
+    }
+  }, [mobileCartOpen])
   const checkoutAttempt = useRef<{ signature: string; key: string } | undefined>(undefined)
   const products = useQuery({
     queryKey: ['products', 'sales'],
