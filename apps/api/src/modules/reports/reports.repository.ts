@@ -17,18 +17,16 @@ async function getDashboardSnapshot(database: DatabaseClient, timezone: string) 
     `SELECT COUNT(*) AS sales_today, COALESCE(SUM(total), 0) AS revenue_today
      FROM sales
      WHERE status = 'COMPLETED'
-       AND (sold_at AT TIME ZONE $1)::date =
-           (CURRENT_TIMESTAMP AT TIME ZONE $1)::date`,
-    [timezone],
+       AND date(sold_at) = date('now')`,
+    [],
   )
   const costs = await database.query<{ cost_today: string | number }>(
     `SELECT COALESCE(SUM(si.quantity_base * si.cost_price), 0) AS cost_today
      FROM sale_items si
      JOIN sales s ON s.id = si.sale_id
      WHERE s.status = 'COMPLETED'
-       AND (s.sold_at AT TIME ZONE $1)::date =
-           (CURRENT_TIMESTAMP AT TIME ZONE $1)::date`,
-    [timezone],
+       AND date(s.sold_at) = date('now')`,
+    [],
   )
   const inventory = await getInventorySummary(database)
   const recentSales = await database.query<{
@@ -264,15 +262,13 @@ function buildSalesFilter(
 ) {
   const values: unknown[] = []
   const conditions = [`${alias}.status = 'COMPLETED'`]
-  const hasDateFilter = Boolean(filters.from || filters.to)
-  if (hasDateFilter) values.push(timezone)
   if (filters.from) {
     values.push(filters.from)
-    conditions.push(`(${alias}.sold_at AT TIME ZONE $1)::date >= $${values.length}::date`)
+    conditions.push(`date(${alias}.sold_at) >= $${values.length}`)
   }
   if (filters.to) {
     values.push(filters.to)
-    conditions.push(`(${alias}.sold_at AT TIME ZONE $1)::date <= $${values.length}::date`)
+    conditions.push(`date(${alias}.sold_at) <= $${values.length}`)
   }
   return { sql: conditions.join(' AND '), values }
 }

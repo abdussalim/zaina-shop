@@ -3,7 +3,7 @@
 import { cleanupOutdatedCaches, createHandlerBoundToURL, precacheAndRoute } from 'workbox-precaching'
 import { NavigationRoute, registerRoute } from 'workbox-routing'
 
-declare const self: ServiceWorkerGlobalScope & typeof globalThis
+declare const self: ServiceWorkerGlobalScope & typeof globalThis & { __WB_MANIFEST: any }
 
 precacheAndRoute(self.__WB_MANIFEST)
 cleanupOutdatedCaches()

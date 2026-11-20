@@ -1,4 +1,4 @@
-import argon2 from 'argon2'
+import { verifyPassword } from '../../utils/crypto.js'
 
 import type { Database } from '../../db/database.js'
 import { AppError } from '../../http/errors.js'
@@ -26,7 +26,7 @@ export function createAuthService(database: Database): AuthService {
     async authenticate(username: string, password: string) {
       const user = await findActiveUserByUsername(database, username)
       const passwordMatches = user
-        ? await argon2.verify(user.password_hash, password)
+        ? await verifyPassword(password, user.password_hash)
         : false
 
       if (!user || !passwordMatches) {

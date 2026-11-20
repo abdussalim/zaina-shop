@@ -37,6 +37,7 @@ export function Modal({
             if (!dismissible) event.preventDefault()
           }}
         >
+          <div className="modal__handle" aria-hidden="true" />
           <div className="modal__header">
             <div>
               <Dialog.Title className="modal__title">{title}</Dialog.Title>

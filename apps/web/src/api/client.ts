@@ -37,7 +37,7 @@ export async function apiRequest<T>(
   options: RequestInit = {},
 ): Promise<T> {
   const headers = new Headers(options.headers)
-  if (options.body && !headers.has('Content-Type')) {
+  if (options.body && !(options.body instanceof FormData) && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json')
   }
   const response = await fetch(path, {
@@ -73,4 +73,14 @@ export async function apiRequest<T>(
 
 export function jsonBody(value: unknown): Pick<RequestInit, 'body'> {
   return { body: JSON.stringify(value) }
+}
+
+export async function uploadImage(file: File): Promise<string> {
+  const formData = new FormData()
+  formData.append('image', file)
+  const res = await apiRequest<{ url: string }>('/api/v1/upload/image', {
+    method: 'POST',
+    body: formData,
+  })
+  return res.url
 }

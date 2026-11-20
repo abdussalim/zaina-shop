@@ -24,18 +24,28 @@ export function InstallPrompt() {
         <strong>Pasang Toko Zaina</strong>
         <span>Buka inventaris lebih cepat dari layar utama.</span>
       </div>
-      <Button
-        size="small"
-        variant="secondary"
-        icon={<Download aria-hidden="true" />}
-        onClick={async () => {
-          await installEvent.prompt()
-          await installEvent.userChoice
-          setInstallEvent(null)
-        }}
-      >
-        Pasang
-      </Button>
+      <div className="pwa-prompt__actions">
+        <Button
+          size="small"
+          variant="ghost"
+          onClick={() => setInstallEvent(null)}
+          aria-label="Tutup saran pemasangan"
+        >
+          Nanti
+        </Button>
+        <Button
+          size="small"
+          variant="secondary"
+          icon={<Download aria-hidden="true" />}
+          onClick={async () => {
+            await installEvent.prompt()
+            await installEvent.userChoice
+            setInstallEvent(null)
+          }}
+        >
+          Pasang
+        </Button>
+      </div>
     </aside>
   )
 }

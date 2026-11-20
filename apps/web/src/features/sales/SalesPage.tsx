@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Minus, Plus, Search, ShoppingBasket, Trash2 } from 'lucide-react'
+import { Minus, Plus, Search, ShoppingBasket, Trash2, X } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { calculateSaleLineTotals, getDiscountValidationMessage } from '@zaina/shared'
@@ -29,6 +29,7 @@ export function SalesPage() {
   const [amountPaid, setAmountPaid] = useState(0)
   const [note, setNote] = useState('')
   const [checkoutError, setCheckoutError] = useState<string>()
+  const [mobileCartOpen, setMobileCartOpen] = useState(false)
   const checkoutAttempt = useRef<{ signature: string; key: string } | undefined>(undefined)
   const products = useQuery({
     queryKey: ['products', 'sales'],
@@ -186,7 +187,43 @@ export function SalesPage() {
           ) : null}
         </section>
 
-        <aside className="cart-panel">
+        {cart.length > 0 ? (
+          <div className="mobile-cart-bar">
+            <button
+              type="button"
+              className="mobile-cart-bar__trigger"
+              onClick={() => setMobileCartOpen(true)}
+              aria-label={`Lihat keranjang, ${cart.length} barang, total ${formatCurrency(total)}`}
+            >
+              <div className="mobile-cart-bar__info">
+                <span className="mobile-cart-bar__badge"><ShoppingBasket size={18} aria-hidden="true" /> {cart.length}</span>
+                <strong className="mobile-cart-bar__total">{formatCurrency(total)}</strong>
+              </div>
+              <span className="mobile-cart-bar__action">Bayar / Keranjang →</span>
+            </button>
+          </div>
+        ) : null}
+
+        {mobileCartOpen ? (
+          <div
+            className="cart-panel__backdrop"
+            onClick={() => setMobileCartOpen(false)}
+            aria-hidden="true"
+          />
+        ) : null}
+
+        <aside className={`cart-panel ${mobileCartOpen ? 'cart-panel--open' : ''}`}>
+          <div className="cart-panel__mobile-header">
+            <div className="modal__handle" aria-hidden="true" />
+            <button
+              type="button"
+              className="icon-button cart-panel__close"
+              onClick={() => setMobileCartOpen(false)}
+              aria-label="Tutup keranjang"
+            >
+              <X size={18} aria-hidden="true" />
+            </button>
+          </div>
           <div className="cart-panel__heading">
             <span><ShoppingBasket aria-hidden="true" /><strong>Keranjang</strong></span>
             <small>{cart.length} barang</small>

@@ -3,36 +3,21 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
-  "engines": {
-    "node": ">=24.0.0",
-    "npm": ">=11.0.0"
-  },
   "scripts": {
-    "build": "npm run build --workspace @zaina/shared && npm run build --workspace @zaina/api && npm run build --workspace @zaina/web",
-    "dev": "concurrently -n shared,api,web -c yellow,green,cyan \"npm:dev:shared\" \"npm:dev:api\" \"npm:dev:web\"",
-    "dev:shared": "npm run dev --workspace @zaina/shared",
-    "dev:api": "npm run dev --workspace @zaina/api",
-    "dev:web": "npm run dev --workspace @zaina/web",
-    "test": "npm run build --workspace @zaina/shared && npm run test --workspace @zaina/shared && npm run test --workspace @zaina/api && npm run test --workspace @zaina/web",
-    "typecheck": "npm run typecheck --workspaces --if-present",
+    "build": "pnpm --filter @zaina/shared build && pnpm --filter @zaina/web build && pnpm --filter @zaina/api build",
+    "dev": "concurrently -n shared,web,api -c yellow,cyan,green \"pnpm --filter @zaina/shared dev\" \"pnpm --filter @zaina/web dev\" \"pnpm --filter @zaina/api dev\"",
+    "dev:web": "pnpm --filter @zaina/web dev",
+    "dev:api": "pnpm --filter @zaina/api dev",
+    "test": "pnpm --recursive run test",
+    "typecheck": "pnpm --recursive run typecheck",
     "lint": "oxlint --deny-warnings --react-plugin --vitest-plugin --jsx-a11y-plugin --import-plugin .",
-    "budget:web": "npm run build --workspace @zaina/web",
-    "budget:web:check": "node scripts/check-web-budget.mjs apps/web/dist",
-    "test:e2e": "playwright test"
+    "deploy": "wrangler pages deploy apps/web/dist --project-name zaina-shop"
   },
   "devDependencies": {
-    "@playwright/test": "^1.55.0",
-    "concurrently": "latest",
+    "concurrently": "^9.1.2",
     "oxlint": "^1.77.0",
     "typescript": "7.0.2",
-    "vitest": "4.1.10"
-  },
-  "allowScripts": {
-    "argon2@0.45.1": true,
-    "esbuild@0.28.2": true
+    "vitest": "4.1.10",
+    "wrangler": "^4.165.0"
   }
 }

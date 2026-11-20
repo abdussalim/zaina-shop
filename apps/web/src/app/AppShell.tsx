@@ -110,7 +110,7 @@ function ShellContent({
         <div className="page-container">
           <OfflineBanner />
           <Suspense fallback={<LoadingState label="Membuka halaman" />}>
-            <Outlet />
+            <Outlet context={{ user, onLogout: logout }} />
           </Suspense>
         </div>
       </div>

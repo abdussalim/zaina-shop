@@ -11,6 +11,7 @@ import { SessionReauthDialog } from '../features/auth/SessionReauthDialog.js'
 import { AppShell } from './AppShell.js'
 import { defaultStoreSettings } from './StoreSettingsContext.js'
 import { OfflineBoundary } from './OfflineBoundary.js'
+import { PwaLifecycle } from '../pwa/PwaLifecycle.js'
 
 const DashboardPage = lazy(() =>
   import('../features/dashboard/DashboardPage.js').then((module) => ({ default: module.DashboardPage })),
@@ -127,6 +128,7 @@ export function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <RoutedApp />
+        <PwaLifecycle />
         <Toaster position="top-right" richColors closeButton />
       </BrowserRouter>
     </QueryClientProvider>

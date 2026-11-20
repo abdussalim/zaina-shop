@@ -1,4 +1,4 @@
-import argon2 from 'argon2'
+import { hashPassword, verifyPassword } from '../../utils/crypto.js'
 import type { PasswordChangeInput, StoreSettingsInput } from '@zaina/shared'
 
 import type { Database } from '../../db/database.js'
@@ -25,7 +25,7 @@ export function createSettingsService(database: Database) {
     async changePassword(userId: string, input: PasswordChangeInput) {
       const passwordHash = await findPasswordHash(database, userId)
       const matches = passwordHash
-        ? await argon2.verify(passwordHash, input.currentPassword)
+        ? await verifyPassword(input.currentPassword, passwordHash)
         : false
       if (!matches) {
         throw new AppError(
@@ -34,7 +34,7 @@ export function createSettingsService(database: Database) {
           'Kata sandi saat ini tidak sesuai',
         )
       }
-      const newHash = await argon2.hash(input.newPassword, { type: argon2.argon2id })
+      const newHash = await hashPassword(input.newPassword)
       await updatePasswordHash(database, userId, newHash)
     },
   }

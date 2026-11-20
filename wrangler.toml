@@ -1,0 +1,13 @@
+name = "zaina-shop"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "apps/web/dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "zaina-shop-db"
+database_id = "c5058279-0c4d-4fa8-992f-81c22a4ddf34"
+
+[[r2_buckets]]
+binding = "IMAGES"
+bucket_name = "zaina-shop-images"

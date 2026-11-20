@@ -1,10 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Plus, Trash2 } from 'lucide-react'
-import { useEffect } from 'react'
+import { Plus, Trash2, Upload, X } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import { useFieldArray, useForm } from 'react-hook-form'
 import { productInputSchema, type ProductInput } from '@zaina/shared'
 import { z } from 'zod'
 
+import { uploadImage } from '../../api/client.js'
 import type { Category, Product } from '../../api/types.js'
 import { Button } from '../../components/ui/Button.js'
 
@@ -100,8 +101,29 @@ export function ProductForm({
   const units = useFieldArray({ control: form.control, name: 'units' })
   const baseUnit = form.watch('baseUnit')
   const baseSalePrice = form.watch('salePrice')
+  const imageUrl = form.watch('imageUrl')
   const unitValues = form.watch('units')
   const unitsError = firstFieldError(form.formState.errors.units)
+
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadError(null)
+    setIsUploading(true)
+    try {
+      const url = await uploadImage(file)
+      form.setValue('imageUrl', url, { shouldValidate: true, shouldDirty: true })
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Gagal mengunggah gambar')
+    } finally {
+      setIsUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
 
   useEffect(() => {
     if (baseUnit.trim()) form.setValue('units.0.name', baseUnit)
@@ -128,7 +150,47 @@ export function ProductForm({
         <label className="form-field"><span>Harga modal / satuan dasar</span><input type="number" min="0" {...form.register('costPrice', { valueAsNumber: true })} />{form.formState.errors.costPrice ? <small className="field__message--error">{form.formState.errors.costPrice.message}</small> : null}</label>
         <label className="form-field"><span>Harga jual / satuan dasar</span><input type="number" min="0" {...form.register('salePrice', { valueAsNumber: true })} />{form.formState.errors.salePrice ? <small className="field__message--error">{form.formState.errors.salePrice.message}</small> : null}</label>
         <label className="form-field"><span>Batas stok minimum</span><input type="number" min="0" step="0.001" {...form.register('minimumStock', { valueAsNumber: true })} />{form.formState.errors.minimumStock ? <small className="field__message--error">{form.formState.errors.minimumStock.message}</small> : null}</label>
-        <label className="form-field"><span>URL foto (opsional)</span><input type="url" {...form.register('imageUrl')} /></label>
+        <div className="form-field" style={{ gridColumn: '1 / -1' }}>
+          <span>Foto barang (opsional)</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
+            {imageUrl ? (
+              <div style={{ position: 'relative', width: '5.5rem', height: '5.5rem', borderRadius: 'var(--radius-sm, 6px)', overflow: 'hidden', border: '1px solid var(--line)', background: 'var(--paper-muted, #f4f4f4)', flexShrink: 0 }}>
+                <img src={imageUrl} alt="Foto produk" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <button
+                  type="button"
+                  onClick={() => form.setValue('imageUrl', '', { shouldDirty: true })}
+                  style={{ position: 'absolute', top: '4px', right: '4px', background: 'rgba(0,0,0,0.65)', color: '#fff', border: 'none', borderRadius: '50%', width: '22px', height: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}
+                  title="Hapus gambar"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ) : null}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                style={{ display: 'none' }}
+                onChange={handleFileChange}
+              />
+              <Button
+                type="button"
+                variant="secondary"
+                size="small"
+                pending={isUploading}
+                disabled={!canWrite || isUploading}
+                icon={<Upload size={16} />}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {imageUrl ? 'Ganti foto' : 'Pilih & unggah foto ke R2'}
+              </Button>
+              {uploadError ? <small className="field__message--error">{uploadError}</small> : null}
+              <small style={{ color: 'var(--ink-soft)' }}>Format JPG, PNG, WEBP, atau GIF (maks. 5 MB)</small>
+            </div>
+          </div>
+          <input type="hidden" {...form.register('imageUrl')} />
+        </div>
       </div>
 
       <section className="unit-builder">

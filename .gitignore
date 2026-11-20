@@ -18,3 +18,4 @@ Thumbs.db
 
 # graphify artifacts
 graphify-out/
+.wrangler/

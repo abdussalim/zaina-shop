@@ -1,8 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { KeyRound, MapPin, Save, ShieldCheck, Store } from 'lucide-react'
+import { BarChart3, ChevronRight, CircleUserRound, KeyRound, LogOut, MapPin, Save, ShieldCheck, Store } from 'lucide-react'
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
+import { useOutletContext } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
   passwordChangeInputSchema,
@@ -21,6 +22,12 @@ import { useConnectivity } from '../../app/ConnectivityContext.js'
 
 export function SettingsPage() {
   const { isOffline, canWrite } = useConnectivity()
+  let outlet: { user?: { displayName: string; username: string }; onLogout?: () => void } | null = null
+  try {
+    outlet = useOutletContext()
+  } catch {
+    outlet = null
+  }
   const settings = useQuery({
     queryKey: ['settings', 'store'],
     queryFn: () => apiRequest<StoreSettings>('/api/v1/settings/store'),
@@ -32,6 +39,40 @@ export function SettingsPage() {
   return (
     <div className="page-stack settings-page">
       <PageHeader eyebrow="Administrasi" title="Pengaturan toko" description="Perbarui identitas yang tampil pada operasional dan amankan akun bersama." />
+      {outlet?.user ? (
+        <div className="mobile-hub-section">
+          <div className="mobile-account-card">
+            <div className="mobile-account-card__info">
+              <CircleUserRound size={32} aria-hidden="true" />
+              <div>
+                <strong>{outlet.user.displayName}</strong>
+                <small>@{outlet.user.username}</small>
+              </div>
+            </div>
+            {outlet.onLogout ? (
+              <Button
+                variant="ghost"
+                size="small"
+                icon={<LogOut size={16} />}
+                onClick={outlet.onLogout}
+              >
+                Keluar
+              </Button>
+            ) : null}
+          </div>
+
+          <a href="/reports" className="mobile-nav-card">
+            <div className="mobile-nav-card__content">
+              <span className="mobile-nav-card__icon"><BarChart3 size={20} /></span>
+              <div>
+                <strong>Laporan Keuangan & Penjualan</strong>
+                <small>Grafik omzet, ringkasan laba kotor, dan ekspor CSV</small>
+              </div>
+            </div>
+            <ChevronRight size={18} className="mobile-nav-card__arrow" />
+          </a>
+        </div>
+      ) : null}
       <div className="settings-grid">
         <StoreForm settings={settings.data} canWrite={canWrite} />
         <PasswordForm canWrite={canWrite} />
