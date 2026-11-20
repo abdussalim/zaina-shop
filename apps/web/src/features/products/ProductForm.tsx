@@ -154,16 +154,8 @@ export function ProductForm({
           <span>Foto barang (opsional)</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
             {imageUrl ? (
-              <div style={{ position: 'relative', width: '5.5rem', height: '5.5rem', borderRadius: 'var(--radius-sm, 6px)', overflow: 'hidden', border: '1px solid var(--line)', background: 'var(--paper-muted, #f4f4f4)', flexShrink: 0 }}>
+              <div style={{ position: 'relative', width: '5.5rem', height: '5.5rem', borderRadius: 'var(--radius-sm)', overflow: 'hidden', border: '1px solid var(--line)', background: 'var(--paper-strong)', flexShrink: 0 }}>
                 <img src={imageUrl} alt="Foto produk" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                <button
-                  type="button"
-                  onClick={() => form.setValue('imageUrl', '', { shouldDirty: true })}
-                  style={{ position: 'absolute', top: '4px', right: '4px', background: 'rgba(0,0,0,0.65)', color: '#fff', border: 'none', borderRadius: '50%', width: '22px', height: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}
-                  title="Hapus gambar"
-                >
-                  <X size={14} />
-                </button>
               </div>
             ) : null}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
@@ -174,17 +166,30 @@ export function ProductForm({
                 style={{ display: 'none' }}
                 onChange={handleFileChange}
               />
-              <Button
-                type="button"
-                variant="secondary"
-                size="small"
-                pending={isUploading}
-                disabled={!canWrite || isUploading}
-                icon={<Upload size={16} />}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                {imageUrl ? 'Ganti foto' : 'Pilih & unggah foto ke R2'}
-              </Button>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="small"
+                  pending={isUploading}
+                  disabled={!canWrite || isUploading}
+                  icon={<Upload size={16} />}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {imageUrl ? 'Ganti foto' : 'Pilih & unggah foto ke R2'}
+                </Button>
+                {imageUrl ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="small"
+                    icon={<Trash2 size={16} />}
+                    onClick={() => form.setValue('imageUrl', '', { shouldDirty: true })}
+                  >
+                    Hapus foto
+                  </Button>
+                ) : null}
+              </div>
               {uploadError ? <small className="field__message--error">{uploadError}</small> : null}
               <small style={{ color: 'var(--ink-soft)' }}>Format JPG, PNG, WEBP, atau GIF (maks. 5 MB)</small>
             </div>

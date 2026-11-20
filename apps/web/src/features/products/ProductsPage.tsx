@@ -101,9 +101,9 @@ export function ProductsPage() {
               {filtered.map((product) => (
                 <tr key={product.id}>
                   <td data-label="Barang"><span className="table-product">{product.imageUrl ? <img src={product.imageUrl} alt="" loading="lazy" /> : <i style={{ background: product.category.color }} />}<span><strong>{product.name}</strong><small>{product.sku}</small></span></span></td>
-                  <td data-label="Kategori / rak"><strong>{product.category.name}</strong><small>{product.location ?? 'Lokasi belum diisi'}</small></td>
-                  <td data-label="Harga jual"><strong>{formatCurrency(product.salePrice)}</strong><small>per {product.baseUnit}</small></td>
-                  <td data-label="Saldo dasar"><strong className="data-number">{formatQuantity(product.balanceBase)}</strong><small>{product.baseUnit}</small></td>
+                  <td data-label="Kategori / rak"><span className="table-cell-val"><strong>{product.category.name}</strong><small>{product.location ?? 'Lokasi belum diisi'}</small></span></td>
+                  <td data-label="Harga jual"><span className="table-cell-val"><strong>{formatCurrency(product.salePrice)}</strong><small>per {product.baseUnit}</small></span></td>
+                  <td data-label="Saldo dasar"><span className="table-cell-val"><strong className="data-number">{formatQuantity(product.balanceBase)}</strong><small>{product.baseUnit}</small></span></td>
                   <td data-label="Status"><StatusBadge tone={getStockTone(product.stockStatus)}>{getStockLabel(product.stockStatus)}</StatusBadge></td>
                   <td><Link className="table-link" to={`/products/${product.id}`}>Lihat detail</Link></td>
                 </tr>

@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { BarChart3, ChevronRight, CircleUserRound, KeyRound, LogOut, MapPin, Save, ShieldCheck, Store } from 'lucide-react'
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
-import { useOutletContext } from 'react-router-dom'
+import { Link, useOutletContext } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
   passwordChangeInputSchema,
@@ -61,7 +61,7 @@ export function SettingsPage() {
             ) : null}
           </div>
 
-          <a href="/reports" className="mobile-nav-card">
+          <Link to="/reports" className="mobile-nav-card">
             <div className="mobile-nav-card__content">
               <span className="mobile-nav-card__icon"><BarChart3 size={20} /></span>
               <div>
@@ -70,7 +70,7 @@ export function SettingsPage() {
               </div>
             </div>
             <ChevronRight size={18} className="mobile-nav-card__arrow" />
-          </a>
+          </Link>
         </div>
       ) : null}
       <div className="settings-grid">

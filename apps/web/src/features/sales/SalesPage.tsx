@@ -164,22 +164,41 @@ export function SalesPage() {
                 const saleUnit = defaultSellingUnit(product)
                 return (
                   <button
-                  type="button"
-                  key={product.id}
-                  className="product-pick"
-                  onClick={() => addProduct(product)}
-                  disabled={!saleUnit || product.balanceBase <= 0 || cart.some((line) => line.product.id === product.id)}
-                  aria-label={`Tambahkan ${product.name}, ${formatCurrency(saleUnit?.salePrice ?? product.salePrice)}`}
-                >
-                  <span className="product-pick__category" style={{ '--category-color': product.category.color } as React.CSSProperties}>
-                    {product.category.name}
-                  </span>
-                  <strong>{product.name}</strong>
-                  <small>{product.sku} · {product.location ?? 'Lokasi belum diisi'}</small>
-                  <span className="product-pick__footer">
-                    <b>{formatCurrency(saleUnit?.salePrice ?? product.salePrice)}{saleUnit ? <small> / {saleUnit.name}</small> : null}</b>
-                    <StatusBadge tone={getStockTone(product.stockStatus)}>{getStockLabel(product.stockStatus)} · {formatQuantity(product.balanceBase)}</StatusBadge>
-                  </span>
+                    type="button"
+                    key={product.id}
+                    className="product-pick"
+                    onClick={() => addProduct(product)}
+                    disabled={!saleUnit || product.balanceBase <= 0 || cart.some((line) => line.product.id === product.id)}
+                    aria-label={`Tambahkan ${product.name}, ${formatCurrency(saleUnit?.salePrice ?? product.salePrice)}`}
+                  >
+                    <div className="product-pick__media">
+                      {product.imageUrl ? (
+                        <img src={product.imageUrl} alt="" className="product-pick__image" loading="lazy" />
+                      ) : (
+                        <span
+                          className="product-pick__avatar"
+                          style={{ '--category-color': product.category.color } as React.CSSProperties}
+                        >
+                          {product.category.name.charAt(0).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                    <div className="product-pick__main">
+                      <span className="product-pick__category-pill" style={{ '--category-color': product.category.color } as React.CSSProperties}>
+                        {product.category.name}
+                      </span>
+                      <strong className="product-pick__title">{product.name}</strong>
+                      <small className="product-pick__meta">{product.sku}{product.location ? ` · ${product.location}` : ''}</small>
+                    </div>
+                    <div className="product-pick__side">
+                      <span className="product-pick__price">
+                        {formatCurrency(saleUnit?.salePrice ?? product.salePrice)}
+                        {saleUnit ? <small>/{saleUnit.name}</small> : null}
+                      </span>
+                      <StatusBadge tone={getStockTone(product.stockStatus)}>
+                        {getStockLabel(product.stockStatus)} · {formatQuantity(product.balanceBase)}
+                      </StatusBadge>
+                    </div>
                   </button>
                 )
               })}
