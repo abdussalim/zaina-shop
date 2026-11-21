@@ -7,6 +7,7 @@ import {
   PackageSearch,
   ShoppingBasket,
   BarChart3,
+  Store,
 } from 'lucide-react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { Suspense } from 'react'
@@ -20,7 +21,8 @@ import { ConnectivityProvider, useConnectivity } from './ConnectivityContext.js'
 import { OfflineBanner } from './OfflineBanner.js'
 
 const navigation = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/', label: 'Etalase', icon: Store, end: true, desktopOnly: true },
   { to: '/products', label: 'Barang', icon: PackageSearch },
   { to: '/sales/new', label: 'Jual', icon: ShoppingBasket, featured: true },
   { to: '/inventory', label: 'Stok', icon: Boxes },

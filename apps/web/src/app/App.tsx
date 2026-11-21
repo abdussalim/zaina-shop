@@ -8,6 +8,7 @@ import type { StoreSettings } from '../api/types.js'
 import { LoadingState } from '../components/ui/States.js'
 import { LoginPage, type AuthenticatedUser } from '../features/auth/LoginPage.js'
 import { SessionReauthDialog } from '../features/auth/SessionReauthDialog.js'
+import { StorefrontPage } from '../features/storefront/StorefrontPage.js'
 import { AppShell } from './AppShell.js'
 import { defaultStoreSettings } from './StoreSettingsContext.js'
 import { OfflineBoundary } from './OfflineBoundary.js'
@@ -71,14 +72,20 @@ function RoutedApp() {
   if (!session.data) {
     return (
       <Routes>
+        <Route path="/" element={<StorefrontPage />} />
+        <Route path="/etalase" element={<StorefrontPage />} />
         <Route
           path="/login"
-          element={<LoginPage onAuthenticated={(user) => {
-            cache.setQueryData(['session'], user)
-            setReauthRequired(false)
-          }} />}
+          element={
+            <LoginPage
+              onAuthenticated={(user) => {
+                cache.setQueryData(['session'], user)
+                setReauthRequired(false)
+              }}
+            />
+          }
         />
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     )
   }
@@ -90,26 +97,31 @@ function RoutedApp() {
   return (
     <>
       <Routes>
-      <Route
-        element={
-          <AppShell
-            user={session.data}
-            storeSettings={storeSettings.data ?? defaultStoreSettings}
-            onLoggedOut={() => cache.setQueryData(['session'], undefined)}
-          />
-        }
-      >
-        <Route index element={<OfflineBoundary allowOffline><DashboardPage /></OfflineBoundary>} />
-        <Route path="products" element={<OfflineBoundary allowOffline><ProductsPage /></OfflineBoundary>} />
-        <Route path="products/:id" element={<OfflineBoundary allowOffline><ProductDetailPage /></OfflineBoundary>} />
-        <Route path="sales/new" element={<OfflineBoundary allowOffline={false}><SalesPage /></OfflineBoundary>} />
-        <Route path="sales/:id" element={<OfflineBoundary allowOffline={false}><SaleReceipt /></OfflineBoundary>} />
-        <Route path="inventory" element={<OfflineBoundary allowOffline><InventoryPage /></OfflineBoundary>} />
-        <Route path="reports" element={<OfflineBoundary allowOffline={false}><ReportsPage /></OfflineBoundary>} />
-        <Route path="settings" element={<OfflineBoundary allowOffline={false}><SettingsPage /></OfflineBoundary>} />
-      </Route>
-      <Route path="/login" element={<Navigate to="/" replace />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
+        <Route
+          element={
+            <AppShell
+              user={session.data}
+              storeSettings={storeSettings.data ?? defaultStoreSettings}
+              onLoggedOut={() => cache.setQueryData(['session'], undefined)}
+            />
+          }
+        >
+          <Route index element={<OfflineBoundary allowOffline><StorefrontPage isStaff /></OfflineBoundary>} />
+          <Route path="etalase" element={<OfflineBoundary allowOffline><StorefrontPage isStaff /></OfflineBoundary>} />
+          <Route path="dashboard" element={<OfflineBoundary allowOffline><DashboardPage /></OfflineBoundary>} />
+          <Route path="products" element={<OfflineBoundary allowOffline><ProductsPage /></OfflineBoundary>} />
+          <Route path="products/:id" element={<OfflineBoundary allowOffline><ProductDetailPage /></OfflineBoundary>} />
+          <Route path="sales" element={<OfflineBoundary allowOffline={false}><SalesPage /></OfflineBoundary>} />
+          <Route path="sales/new" element={<OfflineBoundary allowOffline={false}><SalesPage /></OfflineBoundary>} />
+          <Route path="sales/:id" element={<OfflineBoundary allowOffline={false}><SaleReceipt /></OfflineBoundary>} />
+          <Route path="inventory" element={<OfflineBoundary allowOffline><InventoryPage /></OfflineBoundary>} />
+          <Route path="reports" element={<OfflineBoundary allowOffline={false}><ReportsPage /></OfflineBoundary>} />
+          <Route path="settings" element={<OfflineBoundary allowOffline={false}><SettingsPage /></OfflineBoundary>} />
+          <Route path="login" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Route>
+        <Route path="/login" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
       <SessionReauthDialog
         open={reauthRequired}
