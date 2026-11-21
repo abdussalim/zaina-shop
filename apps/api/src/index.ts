@@ -5,6 +5,7 @@ import { AppError, zodFields } from './http/errors.js'
 import { sendData } from './http/respond.js'
 import { sessionMiddleware } from './middleware/auth.js'
 import { authRoutes } from './routes/auth.js'
+import { storefrontRoutes } from './routes/storefront.js'
 import { uploadRoutes } from './routes/upload.js'
 import { imagesRoutes } from './routes/images.js'
 import { catalogRoutes } from './routes/catalog.js'
@@ -32,6 +33,7 @@ app.get('/api/v1/health', (c) => {
 })
 
 // Sub-routers mounted on /api/v1
+app.route('/api/v1/storefront', storefrontRoutes)
 app.route('/api/v1/auth', authRoutes)
 app.route('/api/v1/upload', uploadRoutes)
 app.route('/api/v1/images', imagesRoutes)
