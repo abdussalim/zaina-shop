@@ -15,6 +15,7 @@ import { Suspense } from 'react'
 import { apiRequest } from '../api/client.js'
 import type { StoreSettings } from '../api/types.js'
 import type { AuthenticatedUser } from '../features/auth/LoginPage.js'
+import { BrandLogo } from '../components/ui/BrandLogo.js'
 import { LoadingState } from '../components/ui/States.js'
 import { StoreSettingsProvider } from './StoreSettingsContext.js'
 import { ConnectivityProvider, useConnectivity } from './ConnectivityContext.js'
@@ -71,7 +72,7 @@ function ShellContent({
       <div className="app-shell">
       <aside className="sidebar">
         <div className="brand-lockup">
-          <span className="brand-seal" aria-hidden="true"><span>Z</span></span>
+          <span className="brand-seal" aria-hidden="true"><BrandLogo variant="mark" tone="light" /></span>
           <span><strong>{storeSettings.storeName}</strong><small>Inventaris toko</small></span>
         </div>
         <nav className="sidebar__nav" aria-label="Navigasi utama">
@@ -99,7 +100,7 @@ function ShellContent({
       <div className="app-shell__body">
         <header className="mobile-header">
           <div className="brand-lockup">
-            <span className="brand-seal" aria-hidden="true"><span>Z</span></span>
+            <span className="brand-seal" aria-hidden="true"><BrandLogo variant="mark" tone="light" /></span>
             <span><strong>{storeSettings.storeName}</strong><small>Inventaris toko</small></span>
           </div>
           <span className={`connection-pill ${status === 'offline' ? 'connection-pill--offline' : ''}`}><i /> {status === 'offline' ? 'Offline' : status === 'checking' ? 'Memeriksa' : 'Tersambung'}</span>

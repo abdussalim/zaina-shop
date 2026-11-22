@@ -92,6 +92,9 @@ describe('StorefrontPage', () => {
     expect(screen.getByText('Stok Real-Time di Rak')).toBeInTheDocument()
     expect(screen.getByText('Pilihan Ecer & Grosir')).toBeInTheDocument()
     expect(screen.getByText('Tanya Langsung WA')).toBeInTheDocument()
+    expect(screen.getByText('Zaina Arsyi')).toBeInTheDocument()
+    expect(screen.getByText('Toko Perabot Rumah · Kapuas')).toBeInTheDocument()
+    expect(container.querySelectorAll('.brand-logo__mark')).toHaveLength(2)
 
     expect(await screen.findByText('Gula Pasir 1kg')).toBeInTheDocument()
     expect(screen.getByText(/Rp\s*17\.000/)).toBeInTheDocument()

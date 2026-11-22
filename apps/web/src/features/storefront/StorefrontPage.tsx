@@ -11,6 +11,7 @@ import {
   X,
 } from 'lucide-react'
 import { apiRequest } from '../../api/client.js'
+import { BrandLogo } from '../../components/ui/BrandLogo.js'
 import { Button } from '../../components/ui/Button.js'
 import { ErrorState, LoadingState } from '../../components/ui/States.js'
 import { ProductCard } from './ProductCard.js'
@@ -115,34 +116,46 @@ export function StorefrontPage({ isStaff }: { isStaff?: boolean | undefined } = 
 
       <section className="storefront-hero" aria-label="Sambutan toko">
         <div className="storefront-hero__inner">
-          <div className="storefront-hero__pill">
-            <span className="storefront-hero__pill-dot" aria-hidden="true" />
-            <span>{heroBadgeText}</span>
+          <div className="storefront-hero__content">
+            <div className="storefront-hero__pill">
+              <span className="storefront-hero__pill-dot" aria-hidden="true" />
+              <span>{heroBadgeText}</span>
+            </div>
+
+            <h2 className="storefront-hero__title">
+              Cek katalog &amp; ketersediaan barang sebelum mampir.
+            </h2>
+
+            <p className="storefront-hero__subtitle">
+              Lihat stok langsung dari rak kami, cek harga ecer maupun grosir, lalu tanyakan
+              detailnya lewat WhatsApp.
+            </p>
+
+            <ul className="storefront-hero__trust">
+              <li>
+                <PackageCheck aria-hidden="true" />
+                <span>Stok Real-Time di Rak</span>
+              </li>
+              <li>
+                <Layers aria-hidden="true" />
+                <span>Pilihan Ecer &amp; Grosir</span>
+              </li>
+              <li>
+                <MessageCircle aria-hidden="true" />
+                <span>Tanya Langsung WA</span>
+              </li>
+            </ul>
           </div>
 
-          <h2 className="storefront-hero__title">
-            Cek katalog &amp; ketersediaan barang sebelum mampir.
-          </h2>
-
-          <p className="storefront-hero__subtitle">
-            Lihat stok langsung dari rak kami, cek harga ecer maupun grosir, lalu tanyakan
-            detailnya lewat WhatsApp.
-          </p>
-
-          <ul className="storefront-hero__trust">
-            <li>
-              <PackageCheck aria-hidden="true" />
-              <span>Stok Real-Time di Rak</span>
-            </li>
-            <li>
-              <Layers aria-hidden="true" />
-              <span>Pilihan Ecer &amp; Grosir</span>
-            </li>
-            <li>
-              <MessageCircle aria-hidden="true" />
-              <span>Tanya Langsung WA</span>
-            </li>
-          </ul>
+          <div className="storefront-hero__brand">
+            <div className="storefront-hero__brand-badge">
+              <BrandLogo variant="mark" tone="dark" />
+            </div>
+            <div className="storefront-hero__brand-meta">
+              <strong className="storefront-hero__brand-name">Zaina Arsyi</strong>
+              <span className="storefront-hero__brand-sub">Toko Perabot Rumah · Kapuas</span>
+            </div>
+          </div>
         </div>
       </section>
 

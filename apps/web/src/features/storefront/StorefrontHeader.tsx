@@ -1,17 +1,7 @@
 import { MessageCircle, User } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { BrandLogo } from '../../components/ui/BrandLogo.js'
 import type { StorefrontInfo } from './types.js'
-
-function getStoreMonogram(storeName: string): string {
-  const words = storeName
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-  if (words.length >= 2) {
-    return `${words[0]!.charAt(0)}${words[1]!.charAt(0)}`.toUpperCase()
-  }
-  return (words[0]?.slice(0, 2) || 'TZ').toUpperCase()
-}
 
 export function StorefrontHeader({
   storeInfo,
@@ -29,7 +19,7 @@ export function StorefrontHeader({
       <div className="storefront-header__inner">
         <div className="storefront-brand">
           <span className="storefront-brand__seal" aria-hidden="true">
-            {getStoreMonogram(displayName)}
+            <BrandLogo variant="mark" tone="light" />
           </span>
           <div className="storefront-brand__text">
             <h1>{displayName}</h1>

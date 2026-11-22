@@ -165,38 +165,74 @@ h2 {
 
 .brand-seal {
   display: grid;
-  width: 2.5rem;
-  height: 2.5rem;
-  flex: 0 0 2.5rem;
+  width: 2.65rem;
+  height: 2.65rem;
+  flex: 0 0 2.65rem;
+  padding: 0.34rem;
   place-items: center;
-  border: 1px solid color-mix(in srgb, var(--brand) 22%, transparent);
-  border-radius: var(--radius-pill);
-  background: var(--brand-soft);
-  color: var(--brand-dark);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: #fffdf8;
+  box-shadow: 0 1px 3px rgb(22 26 23 / 0.05);
 }
 
-.brand-seal > span {
-  display: grid;
-  width: 1.85rem;
-  height: 1.85rem;
-  place-items: center;
-  border: 1px solid color-mix(in srgb, var(--brand) 28%, transparent);
-  border-radius: var(--radius-pill);
-  font-family: var(--font-body);
-  font-size: 0.85rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1;
+.brand-seal .brand-logo__mark {
+  width: 100%;
+  height: 100%;
 }
 
 .brand-lockup--light .brand-seal {
-  border-color: rgb(255 255 255 / 0.25);
-  background: rgb(255 255 255 / 0.14);
-  color: #ffffff;
+  border-color: rgb(255 255 255 / 0.24);
+  background: rgb(255 255 255 / 0.12);
+  box-shadow: none;
 }
 
-.brand-lockup--light .brand-seal > span {
-  border-color: rgb(255 255 255 / 0.28);
+.brand-logo__mark {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.brand-logo--lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.brand-logo--lockup .brand-logo__mark {
+  width: 2.5rem;
+  height: 2rem;
+  flex-shrink: 0;
+}
+
+.brand-logo__text {
+  display: grid;
+  gap: 0.08rem;
+  line-height: 1.15;
+}
+
+.brand-logo__wordmark {
+  font-family: var(--font-body);
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--brand);
+}
+
+.brand-logo__submark {
+  font-family: var(--font-body);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--ink-soft);
+}
+
+.brand-logo--dark .brand-logo__wordmark {
+  color: #fffdf8;
+}
+
+.brand-logo--dark .brand-logo__submark {
+  color: rgb(255 253 248 / 0.78);
 }
 
 /* Interactive Controls & Touch Targets */
@@ -1185,8 +1221,9 @@ input[type='number'] {
     top: auto;
     right: auto;
     bottom: 1.25rem;
-    left: 16.5rem;
-    width: min(24rem, calc(100% - 18rem));
+    left: 1.25rem;
+    width: min(21rem, calc(100% - 2.5rem));
+    padding: var(--space-3);
   }
 
   .top-status__line {

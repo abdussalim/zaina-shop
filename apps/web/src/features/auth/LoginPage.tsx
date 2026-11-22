@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { loginInputSchema, type LoginInput } from '@zaina/shared'
 
 import { apiRequest, ApiClientError, jsonBody } from '../../api/client.js'
+import { BrandLogo } from '../../components/ui/BrandLogo.js'
 import { Button } from '../../components/ui/Button.js'
 import { Field } from '../../components/ui/Field.js'
 
@@ -52,7 +53,7 @@ export function LoginPage({
       <section className="login-story" aria-label="Toko Zaina">
         <div className="brand-lockup brand-lockup--light">
           <span className="brand-seal" aria-hidden="true">
-            <span>Z</span>
+            <BrandLogo variant="mark" tone="dark" />
           </span>
           <span>
             <strong>Toko Zaina</strong>
