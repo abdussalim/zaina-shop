@@ -100,7 +100,7 @@ export function ProductsPage() {
             <tbody>
               {filtered.map((product) => (
                 <tr key={product.id}>
-                  <td data-label="Barang"><span className="table-product">{product.imageUrl ? <img src={product.imageUrl} alt="" loading="lazy" /> : <i style={{ background: product.category.color }} />}<span><strong>{product.name}</strong><small>{product.sku}</small></span></span></td>
+                  <td data-label="Barang"><span className="table-product">{product.imageUrl ? <img src={product.imageUrl} alt="" loading="lazy" /> : <i aria-hidden="true" style={{ '--category-color': product.category.color } as React.CSSProperties}>{product.name.trim().charAt(0).toUpperCase()}</i>}<span><strong>{product.name}</strong><small>{product.sku}</small></span></span></td>
                   <td data-label="Kategori / rak"><span className="table-cell-val"><strong>{product.category.name}</strong><small>{product.location ?? 'Lokasi belum diisi'}</small></span></td>
                   <td data-label="Harga jual"><span className="table-cell-val"><strong>{formatCurrency(product.salePrice)}</strong><small>per {product.baseUnit}</small></span></td>
                   <td data-label="Saldo dasar"><span className="table-cell-val"><strong className="data-number">{formatQuantity(product.balanceBase)}</strong><small>{product.baseUnit}</small></span></td>
@@ -144,7 +144,7 @@ function OfflineProducts({
     <div className="page-stack products-page">
       <PageHeader eyebrow="Katalog baca saja" title="Barang tersimpan" description={`Offline${lastSnapshotAt ? ` · snapshot ${new Date(lastSnapshotAt).toLocaleString('id-ID')}` : ''}. Harga modal dan aksi tulis tidak disimpan di perangkat.`} />
       <label className="filter-search"><Search aria-hidden="true" /><input aria-label="Cari barang" type="search" placeholder="Cari nama atau SKU…" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
-      {filtered.length ? <div className="offline-product-grid">{filtered.map((product) => <Link className="data-card" to={`/products/${product.id}`} key={product.id}><span className="table-product"><i /><span><strong>{product.name}</strong><small>{product.sku} · {product.category}</small></span></span><span><strong>{formatCurrency(product.salePrice)}</strong><small>per {product.baseUnit}</small></span><span><strong>{formatQuantity(product.balance)}</strong><small>{product.baseUnit} · {getStockLabel(product.stockStatus)}</small></span><small>Diskon {product.minimumDiscountPercent}%–{product.maximumDiscountPercent}%</small></Link>)}</div> : <EmptyState title="Barang tidak ditemukan" description="Ubah kata pencarian untuk melihat snapshot lain." />}
+      {filtered.length ? <div className="offline-product-grid">{filtered.map((product) => <Link className="data-card" to={`/products/${product.id}`} key={product.id}><span className="table-product"><i aria-hidden="true">{product.name.trim().charAt(0).toUpperCase()}</i><span><strong>{product.name}</strong><small>{product.sku} · {product.category}</small></span></span><span><strong>{formatCurrency(product.salePrice)}</strong><small>per {product.baseUnit}</small></span><span><strong>{formatQuantity(product.balance)}</strong><small>{product.baseUnit} · {getStockLabel(product.stockStatus)}</small></span><small>Diskon {product.minimumDiscountPercent}%–{product.maximumDiscountPercent}%</small></Link>)}</div> : <EmptyState title="Barang tidak ditemukan" description="Ubah kata pencarian untuk melihat snapshot lain." />}
     </div>
   )
 }

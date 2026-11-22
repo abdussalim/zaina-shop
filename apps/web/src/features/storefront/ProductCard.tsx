@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react'
-import { Plus } from 'lucide-react'
+import { Package, Plus } from 'lucide-react'
 import { formatCurrency } from '../../lib/format.js'
 import type { StorefrontProduct } from './types.js'
 
@@ -17,88 +17,116 @@ function getAvailabilityClass(status: StorefrontProduct['stockStatus']): string 
 
 export function ProductCard({
   product,
+  cartQuantity = 0,
   onSelect,
+  onQuickAdd,
 }: {
   product: StorefrontProduct
+  cartQuantity?: number
   onSelect: (product: StorefrontProduct) => void
+  onQuickAdd: (product: StorefrontProduct) => void
 }) {
   const defaultUnit = product.units.find((u) => u.isDefault) ?? product.units[0]
   const isAvailable = product.stockStatus !== 'OUT_OF_STOCK'
+  const hasMultipleUnits = product.units.length > 1
+  const canQuickAdd = isAvailable && product.units.length === 1 && Boolean(defaultUnit)
   const categoryStyle = {
     '--category-color': product.categoryColor,
   } as CSSProperties
 
-  return (
-    <div
-      className={`storefront-card ${!isAvailable ? 'storefront-card--out' : ''}`}
-      onClick={() => onSelect(product)}
-      role="button"
-      tabIndex={0}
-      style={categoryStyle}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          onSelect(product)
-        }
-      }}
-    >
-      <div className="storefront-card__media">
-        {product.imageUrl ? (
-          <img src={product.imageUrl} alt={product.name} loading="lazy" />
-        ) : (
-          <div className="storefront-card__placeholder">
-            <span className="storefront-card__monogram" aria-hidden="true">
-              {product.name.charAt(0).toUpperCase()}
-            </span>
-          </div>
-        )}
-      </div>
+  function handleActionClick() {
+    if (!isAvailable) return
+    if (canQuickAdd) {
+      onQuickAdd(product)
+      return
+    }
+    onSelect(product)
+  }
 
-      <div className="storefront-card__body">
-        <div className="storefront-card__meta">
+  return (
+    <article
+      className={`storefront-card ${!isAvailable ? 'storefront-card--out' : ''}`}
+      style={categoryStyle}
+    >
+      <button
+        type="button"
+        className="storefront-card__trigger"
+        onClick={() => onSelect(product)}
+        aria-label={`Lihat detail ${product.name}`}
+      >
+        <div className="storefront-card__media">
+          <span
+            className={`storefront-stock-pill storefront-card__stock-badge ${getAvailabilityClass(product.stockStatus)}`}
+          >
+            <span className="storefront-stock-pill__dot" aria-hidden="true" />
+            <span>{getAvailabilityLabel(product.stockStatus)}</span>
+          </span>
+
+          {cartQuantity > 0 && (
+            <span className="storefront-card__cart-badge">
+              {cartQuantity} di keranjang
+            </span>
+          )}
+
+          {product.imageUrl ? (
+            <img src={product.imageUrl} alt={product.name} loading="lazy" />
+          ) : (
+            <div className="storefront-card__placeholder" aria-hidden="true">
+              <span className="storefront-card__studio-badge">
+                <Package />
+              </span>
+              <span className="storefront-card__studio-label">
+                {product.categoryName}
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div className="storefront-card__body">
           <span className="storefront-card__category">
             <span className="storefront-card__category-dot" aria-hidden="true" />
             <span>{product.categoryName}</span>
           </span>
-          <span className={`storefront-stock-pill ${getAvailabilityClass(product.stockStatus)}`}>
-            <span className="storefront-stock-pill__dot" aria-hidden="true" />
-            <span>{getAvailabilityLabel(product.stockStatus)}</span>
-          </span>
+
+          <h3 className="storefront-card__title">{product.name}</h3>
+
+          {hasMultipleUnits && (
+            <span className="storefront-card__units-pill">
+              {product.units.length} satuan
+            </span>
+          )}
+        </div>
+      </button>
+
+      <div className="storefront-card__footer">
+        <div
+          className="storefront-card__price-group"
+          onClick={() => onSelect(product)}
+        >
+          <strong className="storefront-card__price">
+            {defaultUnit ? formatCurrency(defaultUnit.salePrice) : '-'}
+          </strong>
+          {defaultUnit && (
+            <span className="storefront-card__unit">/ {defaultUnit.name}</span>
+          )}
         </div>
 
-        <h3 className="storefront-card__title">{product.name}</h3>
-
-        {product.units.length > 1 && (
-          <span className="storefront-card__units-hint">
-            {product.units.length} pilihan satuan
-          </span>
-        )}
-
-        <div className="storefront-card__footer">
-          <div className="storefront-card__price-group">
-            <strong className="storefront-card__price data-number">
-              {defaultUnit ? formatCurrency(defaultUnit.salePrice) : '-'}
-            </strong>
-            {defaultUnit && (
-              <span className="storefront-card__unit">/ {defaultUnit.name}</span>
-            )}
-          </div>
-
-          <button
-            type="button"
-            className="button button--secondary storefront-card__cta"
-            disabled={!isAvailable}
-            onClick={(e) => {
-              e.stopPropagation()
-              onSelect(product)
-            }}
-            aria-label={`Pilih ${product.name}`}
-          >
-            {isAvailable && <Plus size={15} aria-hidden="true" />}
-            <span>{isAvailable ? 'Pilih' : 'Habis'}</span>
-          </button>
-        </div>
+        <button
+          type="button"
+          className={`storefront-card__add-btn ${cartQuantity > 0 ? 'storefront-card__add-btn--active' : ''}`}
+          disabled={!isAvailable}
+          onClick={handleActionClick}
+          aria-label={
+            !isAvailable
+              ? `${product.name} habis`
+              : canQuickAdd
+                ? `Tambah ${product.name} ke keranjang`
+                : `Pilih ${product.name}`
+          }
+        >
+          <Plus size={18} aria-hidden="true" />
+        </button>
       </div>
-    </div>
+    </article>
   )
 }

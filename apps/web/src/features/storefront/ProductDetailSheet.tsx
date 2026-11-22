@@ -1,5 +1,5 @@
 import { useEffect, useState, type CSSProperties } from 'react'
-import { Check, Minus, Plus, X } from 'lucide-react'
+import { Check, Minus, Package, Plus, X } from 'lucide-react'
 import { Button } from '../../components/ui/Button.js'
 import { formatCurrency } from '../../lib/format.js'
 import type { CartItem, StorefrontProduct } from './types.js'
@@ -95,9 +95,12 @@ export function ProductDetailSheet({
             {product.imageUrl ? (
               <img src={product.imageUrl} alt={product.name} />
             ) : (
-              <div className="storefront-detail__placeholder">
-                <span className="storefront-detail__monogram" aria-hidden="true">
-                  {product.name.charAt(0).toUpperCase()}
+              <div className="storefront-detail__placeholder" aria-hidden="true">
+                <span className="storefront-detail__studio-badge">
+                  <Package />
+                </span>
+                <span className="storefront-card__studio-label">
+                  {product.categoryName}
                 </span>
               </div>
             )}
@@ -148,9 +151,14 @@ export function ProductDetailSheet({
                         </span>
                       )}
                     </span>
-                    <span className="storefront-unit-card__price data-number">
+                    <span className="storefront-unit-card__price">
                       {formatCurrency(unit.salePrice)}
                     </span>
+                    {unit.factor > 1 && (
+                      <span className="storefront-unit-card__factor">
+                        Isi {unit.factor} {product.baseUnit}
+                      </span>
+                    )}
                   </button>
                 )
               })}
@@ -169,7 +177,7 @@ export function ProductDetailSheet({
               >
                 <Minus size={18} aria-hidden="true" />
               </button>
-              <span className="storefront-stepper__value data-number" aria-live="polite">
+              <span className="storefront-stepper__value" aria-live="polite">
                 {quantity}
               </span>
               <button
@@ -188,7 +196,7 @@ export function ProductDetailSheet({
           <div className="storefront-detail__footer-row">
             <div className="storefront-sheet__subtotal">
               <span className="storefront-sheet__subtotal-label">Subtotal</span>
-              <strong className="storefront-sheet__subtotal-value data-number">
+              <strong className="storefront-sheet__subtotal-value">
                 {formatCurrency(selectedUnit.salePrice * quantity)}
               </strong>
             </div>

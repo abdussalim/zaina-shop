@@ -97,6 +97,8 @@ function RoutedApp() {
   return (
     <>
       <Routes>
+        <Route path="/" element={<StorefrontPage isStaff />} />
+        <Route path="/etalase" element={<StorefrontPage isStaff />} />
         <Route
           element={
             <AppShell
@@ -106,8 +108,6 @@ function RoutedApp() {
             />
           }
         >
-          <Route index element={<OfflineBoundary allowOffline><StorefrontPage isStaff /></OfflineBoundary>} />
-          <Route path="etalase" element={<OfflineBoundary allowOffline><StorefrontPage isStaff /></OfflineBoundary>} />
           <Route path="dashboard" element={<OfflineBoundary allowOffline><DashboardPage /></OfflineBoundary>} />
           <Route path="products" element={<OfflineBoundary allowOffline><ProductsPage /></OfflineBoundary>} />
           <Route path="products/:id" element={<OfflineBoundary allowOffline><ProductDetailPage /></OfflineBoundary>} />
@@ -117,8 +117,6 @@ function RoutedApp() {
           <Route path="inventory" element={<OfflineBoundary allowOffline><InventoryPage /></OfflineBoundary>} />
           <Route path="reports" element={<OfflineBoundary allowOffline={false}><ReportsPage /></OfflineBoundary>} />
           <Route path="settings" element={<OfflineBoundary allowOffline={false}><SettingsPage /></OfflineBoundary>} />
-          <Route path="login" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Route>
         <Route path="/login" element={<Navigate to="/dashboard" replace />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

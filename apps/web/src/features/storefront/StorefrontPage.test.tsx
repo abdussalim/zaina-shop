@@ -54,14 +54,14 @@ vi.mock('../../api/client.js', () => ({
   }),
 }))
 
-function renderStorefront() {
+function renderStorefront(isStaff?: boolean) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
-        <StorefrontPage />
+        <StorefrontPage isStaff={isStaff} />
       </MemoryRouter>
     </QueryClientProvider>,
   )
@@ -73,16 +73,44 @@ describe('StorefrontPage', () => {
     document.body.style.overflow = ''
   })
 
-  it('renders store header and products from catalog query', async () => {
+  it('renders boutique hero, store header, and catalog products', async () => {
     renderStorefront()
 
     expect(await screen.findByText('Toko Zaina Test')).toBeInTheDocument()
+    expect(
+      screen.getByText('Kebutuhan rumah tangga, siap antar dari rak kami.'),
+    ).toBeInTheDocument()
     expect(await screen.findByText('Gula Pasir 1kg')).toBeInTheDocument()
     expect(screen.getByText(/Rp\s*17\.000/)).toBeInTheDocument()
-    expect(screen.getByText('2 pilihan satuan')).toBeInTheDocument()
+    expect(screen.getByText('2 satuan')).toBeInTheDocument()
+
+    const staffLink = screen.getByRole('link', { name: /Staf/i })
+    expect(staffLink).toHaveAttribute('href', '/login')
   })
 
-  it('opens product detail sheet, switches unit, adds to cart, and opens cart sheet', async () => {
+  it('links staff header button to /dashboard when isStaff is true', async () => {
+    renderStorefront(true)
+
+    expect(await screen.findByText('Toko Zaina Test')).toBeInTheDocument()
+    const staffLink = screen.getByRole('link', { name: /Panel Kasir/i })
+    expect(staffLink).toHaveAttribute('href', '/dashboard')
+  })
+
+  it('quick-adds single-unit product straight to cart without opening modal', async () => {
+    renderStorefront()
+
+    const quickAddBtn = await screen.findByRole('button', {
+      name: 'Tambah Air Mineral 600ml ke keranjang',
+    })
+    fireEvent.click(quickAddBtn)
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getByText('1 di keranjang')).toBeInTheDocument()
+    expect(screen.getByText('1 Barang')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Lihat Keranjang/i })).toBeInTheDocument()
+  })
+
+  it('opens product detail sheet, switches unit, adds to cart, and validates checkout', async () => {
     renderStorefront()
 
     const selectButton = await screen.findByRole('button', {

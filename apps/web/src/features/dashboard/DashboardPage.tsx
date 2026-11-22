@@ -129,8 +129,8 @@ export function DashboardPage() {
               {data.recentSales.map((sale) => (
                 <Link to={`/sales/${sale.id}`} key={sale.id} className="ledger-row">
                   <span><strong>{sale.saleNumber}</strong><small>{formatDateTime(sale.soldAt, storeSettings.timezone)}</small></span>
-                  <strong>{formatCurrency(sale.total)}</strong>
-                  <StatusBadge tone={sale.status === 'COMPLETED' ? 'success' : 'danger'}>{sale.status === 'COMPLETED' ? 'Selesai' : 'Batal'}</StatusBadge>
+                  <span className="ledger-row__end"><strong>{formatCurrency(sale.total)}</strong>
+                  <StatusBadge tone={sale.status === 'COMPLETED' ? 'success' : 'danger'}>{sale.status === 'COMPLETED' ? 'Selesai' : 'Batal'}</StatusBadge></span>
                 </Link>
               ))}
             </div>

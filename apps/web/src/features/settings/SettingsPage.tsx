@@ -71,6 +71,17 @@ export function SettingsPage() {
             </div>
             <ChevronRight size={18} className="mobile-nav-card__arrow" />
           </Link>
+
+          <Link to="/" className="mobile-nav-card">
+            <div className="mobile-nav-card__content">
+              <span className="mobile-nav-card__icon"><Store size={20} /></span>
+              <div>
+                <strong>Lihat Etalase Publik</strong>
+                <small>Pratinjau katalog &amp; pesan WhatsApp pembeli</small>
+              </div>
+            </div>
+            <ChevronRight size={18} className="mobile-nav-card__arrow" />
+          </Link>
         </div>
       ) : null}
       <div className="settings-grid">

@@ -47,8 +47,8 @@
   --danger-soft: #fcebe9;
 
   /* Typography */
-  --font-body: 'Instrument Sans Variable', 'Segoe UI', sans-serif;
-  --font-data: 'JetBrains Mono Variable', Consolas, monospace;
+  --font-body: 'Plus Jakarta Sans Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-data: 'Plus Jakarta Sans Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
 
   /* Spacing Scale */
   --space-1: 0.25rem;

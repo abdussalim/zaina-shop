@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { AlertCircle, MessageCircle, Minus, Plus, ShoppingBag, Trash2, X } from 'lucide-react'
+import { AlertCircle, MessageCircle, Minus, Package, Plus, ShoppingBag, Trash2, X } from 'lucide-react'
 import { buildWhatsAppLink, formatWhatsAppOrder } from '@zaina/shared'
 import { Button } from '../../components/ui/Button.js'
 import { formatCurrency } from '../../lib/format.js'
@@ -116,7 +116,7 @@ export function StorefrontCartSheet({
                       {item.imageUrl ? (
                         <img src={item.imageUrl} alt="" />
                       ) : (
-                        <span>{item.productName.charAt(0).toUpperCase()}</span>
+                        <Package size={18} />
                       )}
                     </div>
 
@@ -125,7 +125,7 @@ export function StorefrontCartSheet({
                       <span className="storefront-cart-item__unit">
                         {formatCurrency(item.unitPrice)} / {item.unitName}
                       </span>
-                      <strong className="storefront-cart-item__subtotal data-number">
+                      <strong className="storefront-cart-item__subtotal">
                         {formatCurrency(item.unitPrice * item.quantity)}
                       </strong>
                     </div>
@@ -141,7 +141,7 @@ export function StorefrontCartSheet({
                       >
                         <Minus size={14} aria-hidden="true" />
                       </button>
-                      <span className="storefront-cart-stepper__val data-number">
+                      <span className="storefront-cart-stepper__val">
                         {item.quantity}
                       </span>
                       <button
@@ -169,7 +169,7 @@ export function StorefrontCartSheet({
 
               <div className="storefront-cart-summary">
                 <span>Total Belanja</span>
-                <strong className="data-number">{formatCurrency(total)}</strong>
+                <strong>{formatCurrency(total)}</strong>
               </div>
 
               {error && (
@@ -232,7 +232,7 @@ export function StorefrontCartSheet({
                 </button>
               </div>
               <p className="storefront-cart-sheet__reassurance">
-                Otomatis membuka WhatsApp dengan rincian pesanan Anda
+                Pesanan otomatis terbuka di WhatsApp toko — tanpa perlu bikin akun
               </p>
             </div>
           </>

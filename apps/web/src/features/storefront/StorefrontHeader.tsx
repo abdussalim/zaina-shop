@@ -41,11 +41,11 @@ export function StorefrontHeader({
 
         <nav className="storefront-nav-actions" aria-label="Navigasi etalase">
           <Link
-            to={isStaff ? '/sales' : '/login'}
+            to={isStaff ? '/dashboard' : '/login'}
             className="storefront-staff-link"
           >
             <User size={15} aria-hidden="true" />
-            <span>{isStaff ? 'Panel Kasir' : 'Masuk Staf'}</span>
+            <span>{isStaff ? 'Panel Kasir' : 'Staf'}</span>
           </Link>
 
           <button

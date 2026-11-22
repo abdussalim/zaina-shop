@@ -1,5 +1,4 @@
-import '@fontsource-variable/instrument-sans'
-import '@fontsource-variable/jetbrains-mono'
+import '@fontsource-variable/plus-jakarta-sans'
 import './styles/tokens.css'
 import './styles/global.css'
 import './styles/features.css'

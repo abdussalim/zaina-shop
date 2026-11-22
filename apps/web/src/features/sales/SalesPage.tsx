@@ -25,6 +25,7 @@ export function SalesPage() {
   const queryClient = useQueryClient()
   const { isOffline, canWrite } = useConnectivity()
   const [search, setSearch] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('')
   const [cart, setCart] = useState<CartLine[]>([])
   const [amountPaid, setAmountPaid] = useState(0)
   const [note, setNote] = useState('')
@@ -47,15 +48,27 @@ export function SalesPage() {
     enabled: !isOffline,
   })
 
+  const categories = useMemo(() => {
+    const map = new Map<string, Product['category']>()
+    for (const product of products.data ?? []) {
+      if (!map.has(product.category.id)) {
+        map.set(product.category.id, product.category)
+      }
+    }
+    return Array.from(map.values())
+  }, [products.data])
+
   const visibleProducts = useMemo(() => {
     const query = search.trim().toLocaleLowerCase('id-ID')
-    return (products.data ?? []).filter(
-      (product) =>
+    return (products.data ?? []).filter((product) => {
+      const matchesCategory = !selectedCategory || product.categoryId === selectedCategory
+      const matchesQuery =
         !query ||
         product.name.toLocaleLowerCase('id-ID').includes(query) ||
-        product.sku.toLocaleLowerCase('id-ID').includes(query),
-    )
-  }, [products.data, search])
+        product.sku.toLocaleLowerCase('id-ID').includes(query)
+      return matchesCategory && matchesQuery
+    })
+  }, [products.data, search, selectedCategory])
 
   const lineSummaries = cart.map(summarizeLine)
   const subtotal = lineSummaries.reduce((sum, line) => sum + line.subtotal, 0)
@@ -164,11 +177,61 @@ export function SalesPage() {
             />
           </div>
 
+          {products.isSuccess && categories.length > 0 ? (
+            <div className="pos-category-pills" role="tablist" aria-label="Filter kategori barang">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={selectedCategory === ''}
+                className={`pos-category-pill ${selectedCategory === '' ? 'is-active' : ''}`}
+                onClick={() => setSelectedCategory('')}
+              >
+                Semua
+              </button>
+              {categories.map((category) => (
+                <button
+                  type="button"
+                  role="tab"
+                  key={category.id}
+                  aria-selected={selectedCategory === category.id}
+                  className={`pos-category-pill ${selectedCategory === category.id ? 'is-active' : ''}`}
+                  onClick={() => setSelectedCategory(category.id)}
+                >
+                  <span
+                    className="pos-category-pill__dot"
+                    style={{ background: category.color }}
+                    aria-hidden="true"
+                  />
+                  {category.name}
+                </button>
+              ))}
+            </div>
+          ) : null}
+
           {products.isPending ? <LoadingState label="Memuat rak barang" /> : null}
           {products.isError ? (
             <EmptyState title="Barang belum dapat dimuat" description="Periksa koneksi lalu coba lagi." />
           ) : null}
-          {products.isSuccess ? (
+          {products.isSuccess && visibleProducts.length === 0 ? (
+            <EmptyState
+              title="Barang tidak ditemukan"
+              description="Coba kata kunci lain atau pilih kategori Semua."
+              action={
+                search || selectedCategory ? (
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setSearch('')
+                      setSelectedCategory('')
+                    }}
+                  >
+                    Tampilkan semua
+                  </Button>
+                ) : undefined
+              }
+            />
+          ) : null}
+          {products.isSuccess && visibleProducts.length > 0 ? (
             <div className="product-picker">
               {visibleProducts.map((product) => {
                 const saleUnit = defaultSellingUnit(product)
@@ -181,22 +244,27 @@ export function SalesPage() {
                     disabled={!saleUnit || product.balanceBase <= 0 || cart.some((line) => line.product.id === product.id)}
                     aria-label={`Tambahkan ${product.name}, ${formatCurrency(saleUnit?.salePrice ?? product.salePrice)}`}
                   >
-                    <div className="product-pick__media">
-                      {product.imageUrl ? (
-                        <img src={product.imageUrl} alt="" className="product-pick__image" loading="lazy" />
-                      ) : (
-                        <span
-                          className="product-pick__avatar"
-                          style={{ '--category-color': product.category.color } as React.CSSProperties}
-                        >
-                          {product.category.name.charAt(0).toUpperCase()}
-                        </span>
-                      )}
-                    </div>
-                    <div className="product-pick__main">
-                      <span className="product-pick__category-pill" style={{ '--category-color': product.category.color } as React.CSSProperties}>
+                    <div className="product-pick__top">
+                      <div className="product-pick__media">
+                        {product.imageUrl ? (
+                          <img src={product.imageUrl} alt="" className="product-pick__image" loading="lazy" />
+                        ) : (
+                          <span
+                            className="product-pick__avatar"
+                            style={{ '--category-color': product.category.color } as React.CSSProperties}
+                          >
+                            {product.name.trim().charAt(0).toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                      <span
+                        className="product-pick__category-pill"
+                        style={{ '--category-color': product.category.color } as React.CSSProperties}
+                      >
                         {product.category.name}
                       </span>
+                    </div>
+                    <div className="product-pick__main">
                       <strong className="product-pick__title">{product.name}</strong>
                       <small className="product-pick__meta">{product.sku}{product.location ? ` · ${product.location}` : ''}</small>
                     </div>

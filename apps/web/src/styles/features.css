@@ -58,10 +58,11 @@
 .metric-rail__item,
 .compact-metrics article {
   display: grid;
+  min-width: 0;
   min-height: 6.75rem;
   align-content: center;
   gap: 0.35rem;
-  padding: var(--space-4);
+  padding: var(--space-3) var(--space-4);
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   background: var(--surface-elevated);
@@ -84,11 +85,12 @@
 .compact-metrics strong {
   color: var(--ink);
   font-family: var(--font-data);
-  font-variant-numeric: tabular-nums;
-  font-size: clamp(1.25rem, 4.5vw, 1.9rem);
+  font-variant-numeric: tabular-nums lining-nums;
+  font-size: clamp(1.05rem, 4.2vw, 1.75rem);
   font-weight: 650;
   letter-spacing: -0.04em;
-  line-height: 1.15;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 .compact-metrics__warn strong {
@@ -156,7 +158,7 @@
 }
 
 .data-card strong {
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: tabular-nums lining-nums;
 }
 
 .data-card small {
@@ -193,8 +195,13 @@
   margin-inline: calc(var(--space-2) * -1);
   border-top: 1px solid var(--line);
   border-radius: var(--radius-sm);
-  grid-template-columns: 4px minmax(0, 1fr) auto;
+  grid-template-columns: 4px minmax(0, 1fr) auto auto;
   transition: background-color 150ms ease;
+}
+
+.stock-rail > svg {
+  color: var(--ink-muted);
+  flex-shrink: 0;
 }
 
 .stock-rail:hover {
@@ -247,7 +254,7 @@
 
 .stock-rail__quantity strong {
   font-family: var(--font-data);
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: tabular-nums lining-nums;
   font-size: 1.05rem;
 }
 
@@ -370,8 +377,14 @@
   justify-items: end;
 }
 
+.ledger-row__end {
+  display: grid;
+  justify-items: end;
+  gap: 0.25rem;
+}
+
 .ledger-row strong {
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: tabular-nums lining-nums;
 }
 
 .ledger-pagination {
@@ -381,13 +394,13 @@
 .quantity-in {
   color: var(--success);
   font-family: var(--font-data);
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: tabular-nums lining-nums;
 }
 
 .quantity-out {
   color: var(--danger);
   font-family: var(--font-data);
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: tabular-nums lining-nums;
 }
 
 /* POS Sales Workspace & Catalog */
@@ -444,6 +457,62 @@
   color: var(--ink-muted);
 }
 
+.pos-category-pills {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  overflow-x: auto;
+  padding-bottom: 0.2rem;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+}
+
+.pos-category-pills::-webkit-scrollbar {
+  display: none;
+}
+
+.pos-category-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+  min-height: 2.65rem;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface-elevated);
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.pos-category-pill:hover {
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+
+.pos-category-pill.is-active {
+  border-color: var(--brand);
+  background: var(--brand);
+  color: #ffffff;
+}
+
+.pos-category-pill__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: var(--radius-pill);
+  flex-shrink: 0;
+}
+
+.pos-category-pill.is-active .pos-category-pill__dot {
+  box-shadow: 0 0 0 1.5px rgb(255 255 255 / 0.75);
+}
+
 .product-picker {
   display: grid;
   gap: var(--space-2);
@@ -455,8 +524,10 @@
   position: relative;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
   align-items: center;
-  gap: var(--space-3);
+  column-gap: var(--space-3);
+  row-gap: 0.15rem;
   padding: var(--space-3);
   min-height: 4.75rem;
   border: 1px solid var(--line);
@@ -483,16 +554,23 @@
   opacity: 0.55;
 }
 
+.product-pick__top {
+  display: contents;
+}
+
 .product-pick__media {
+  grid-column: 1;
+  grid-row: 1 / span 2;
   display: flex;
   align-items: center;
   justify-content: center;
+  align-self: center;
   flex-shrink: 0;
 }
 
 .product-pick__image {
-  width: 3.25rem;
-  height: 3.25rem;
+  width: 2.75rem;
+  height: 2.75rem;
   border-radius: var(--radius-sm);
   object-fit: cover;
   border: 1px solid var(--line);
@@ -503,24 +581,35 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 3.25rem;
-  height: 3.25rem;
+  width: 2.75rem;
+  height: 2.75rem;
   border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--category-color, var(--brand)) 16%, var(--surface-subtle));
   color: var(--category-color, var(--brand-dark));
   border: 1px solid color-mix(in srgb, var(--category-color, var(--brand)) 22%, transparent);
   font-weight: 700;
-  font-size: 1.15rem;
+  font-size: 1.05rem;
 }
 
 .product-pick__main {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: start;
   display: grid;
   min-width: 0;
   gap: 0.15rem;
 }
 
 .product-pick__category-pill {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: start;
+  align-self: end;
   display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 0.68rem;
   font-weight: 650;
   text-transform: uppercase;
@@ -546,6 +635,9 @@
 }
 
 .product-pick__side {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  align-self: center;
   display: grid;
   justify-items: end;
   align-content: center;
@@ -556,7 +648,7 @@
 
 .product-pick__price {
   font-family: var(--font-data);
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: tabular-nums lining-nums;
   font-weight: 700;
   font-size: 0.96rem;
   color: var(--ink);
@@ -619,7 +711,7 @@
 
 .mobile-cart-bar__total {
   font-family: var(--font-data);
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: tabular-nums lining-nums;
   font-size: 1.1rem;
   font-weight: 700;
 }
@@ -842,7 +934,7 @@
   background: var(--surface-elevated);
   color: var(--ink);
   font-family: var(--font-data);
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: tabular-nums lining-nums;
   font-size: 1rem;
   font-weight: 600;
   text-align: center;
@@ -874,7 +966,7 @@
   background: transparent;
   color: var(--ink);
   font-family: var(--font-data);
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: tabular-nums lining-nums;
   font-size: 1rem;
 }
 
@@ -912,7 +1004,7 @@
 .cart-line__pricing strong,
 .cart-totals strong {
   font-family: var(--font-data);
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: tabular-nums lining-nums;
 }
 
 .cart-totals {
@@ -941,17 +1033,50 @@
 }
 
 /* Filters, Toolbars & Product Forms */
-.report-toolbar,
-.inline-filters,
-.date-range {
+.report-toolbar {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.inline-filters {
   display: grid;
   gap: var(--space-2);
+  width: 100%;
+}
+
+.inline-filters .button {
+  min-height: var(--tap-size);
+  width: 100%;
+}
+
+.date-range {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+  gap: var(--space-2);
+}
+
+.date-range label {
+  min-width: 0;
+}
+
+.date-range > a.button {
+  grid-column: 1 / -1;
+  min-height: var(--tap-size);
 }
 
 .filter-bar {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-2);
+}
+
+.filter-bar > label {
+  min-width: 0;
+}
+
+.filter-search {
+  grid-column: 1 / -1;
 }
 
 .filter-bar .filter-search {
@@ -979,11 +1104,19 @@
 }
 
 .table-product > i {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 2.75rem;
   height: 2.75rem;
   flex: 0 0 2.75rem;
   border-radius: var(--radius-sm);
-  background: var(--brand-soft);
+  background: color-mix(in srgb, var(--category-color, var(--brand)) 16%, var(--surface-subtle));
+  color: var(--category-color, var(--brand-dark));
+  border: 1px solid color-mix(in srgb, var(--category-color, var(--brand)) 22%, transparent);
+  font-style: normal;
+  font-weight: 700;
+  font-size: 1rem;
 }
 
 .table-product img {
@@ -1011,11 +1144,12 @@
   flex-direction: column;
   align-items: flex-end;
   text-align: right;
+  font-variant-numeric: tabular-nums lining-nums;
 }
 
 .table-cell-val strong {
   font-size: 0.9rem;
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: tabular-nums lining-nums;
 }
 
 .table-cell-val small {
@@ -1149,7 +1283,7 @@
 
 .product-hero__stock > strong {
   font-family: var(--font-data);
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: tabular-nums lining-nums;
   font-size: 2rem;
   line-height: 1.1;
 }
@@ -1182,7 +1316,7 @@
 
 .unit-card > strong {
   font-family: var(--font-data);
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: tabular-nums lining-nums;
   font-size: 1.2rem;
 }
 
@@ -1214,7 +1348,7 @@
 
 .detail-list dd,
 .receipt__totals dd {
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: tabular-nums lining-nums;
 }
 
 .detail-list dt,
@@ -1323,7 +1457,7 @@
 
 .receipt__meta strong {
   font-family: var(--font-data);
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: tabular-nums lining-nums;
 }
 
 .receipt__row {
@@ -1357,14 +1491,14 @@
 .receipt__quantity,
 .receipt__price {
   display: none;
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: tabular-nums lining-nums;
 }
 
 .receipt__gross,
 .receipt__discount,
 .receipt__net {
   text-align: right;
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: tabular-nums lining-nums;
 }
 
 .receipt__totals {
@@ -1579,11 +1713,60 @@
   }
 
   .product-picker {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr));
+    gap: var(--space-3);
   }
 
-  .filter-bar,
-  .report-toolbar {
+  .product-pick {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    min-height: 9.75rem;
+  }
+
+  .product-pick__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+
+  .product-pick__category-pill {
+    padding: 0.2rem 0.55rem;
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--category-color, var(--brand)) 12%, var(--surface-subtle));
+    color: color-mix(in srgb, var(--category-color, var(--brand)) 80%, var(--ink));
+    line-height: 1.2;
+  }
+
+  .product-pick__main {
+    gap: 0.2rem;
+  }
+
+  .product-pick__title {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.3;
+  }
+
+  .product-pick__side {
+    margin-top: auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-1) var(--space-2);
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--line);
+    text-align: left;
+  }
+
+  .filter-bar {
     grid-template-columns: minmax(12rem, 1fr) auto;
     align-items: center;
   }
@@ -1597,6 +1780,20 @@
   .inline-filters,
   .date-range {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .inline-filters .button {
+    grid-column: 1 / -1;
+    width: auto;
+    justify-self: start;
+  }
+
+  .date-range {
+    align-items: end;
+  }
+
+  .date-range > a.button {
+    grid-column: 1 / -1;
   }
 
   .unit-row {
@@ -1647,10 +1844,6 @@
     align-items: start;
   }
 
-  .product-picker {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
   .offline-product-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -1664,6 +1857,35 @@
   }
 
   .filter-search {
+    grid-column: auto;
+  }
+
+  .inline-filters {
+    width: auto;
+    grid-template-columns: minmax(10rem, 1fr) minmax(10rem, 1fr) auto;
+    align-items: center;
+  }
+
+  .inline-filters .button {
+    grid-column: auto;
+  }
+
+  .report-toolbar {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: end;
+  }
+
+  .report-toolbar .segmented-control {
+    width: auto;
+  }
+
+  .date-range {
+    grid-template-columns: minmax(9rem, 1fr) minmax(9rem, 1fr) auto;
+    align-items: end;
+    justify-self: end;
+  }
+
+  .date-range > a.button {
     grid-column: auto;
   }
 
@@ -1701,7 +1923,9 @@
   }
 
   .table-cell-val {
-    display: block;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
     text-align: left;
   }
 
@@ -1763,6 +1987,10 @@
 }
 
 @media (min-width: 1025px) {
+  .product-picker {
+    grid-template-columns: repeat(auto-fill, minmax(14.5rem, 1fr));
+  }
+
   .dashboard-grid--activity,
   .report-grid {
     gap: var(--space-8);

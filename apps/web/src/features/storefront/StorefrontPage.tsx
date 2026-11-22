@@ -1,6 +1,15 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ChevronRight, PackageOpen, Search, ShoppingBag, X } from 'lucide-react'
+import {
+  ArrowRight,
+  Layers,
+  MessageCircle,
+  PackageCheck,
+  PackageOpen,
+  Search,
+  ShoppingBag,
+  X,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { apiRequest } from '../../api/client.js'
 import { Button } from '../../components/ui/Button.js'
@@ -63,6 +72,19 @@ export function StorefrontPage({ isStaff }: { isStaff?: boolean | undefined } = 
 
   const catalog = catalogQuery.data ?? { categories: [], products: [] }
 
+  const categoryCounts = new Map<string, number>()
+  for (const product of catalog.products) {
+    categoryCounts.set(product.categoryId, (categoryCounts.get(product.categoryId) ?? 0) + 1)
+  }
+
+  const cartQuantityByProduct = new Map<string, number>()
+  for (const item of cart) {
+    cartQuantityByProduct.set(
+      item.productId,
+      (cartQuantityByProduct.get(item.productId) ?? 0) + item.quantity,
+    )
+  }
+
   const filteredProducts = catalog.products.filter((product) => {
     const matchesCategory =
       selectedCategory === 'ALL' || product.categoryId === selectedCategory
@@ -77,6 +99,9 @@ export function StorefrontPage({ isStaff }: { isStaff?: boolean | undefined } = 
   const cartTotal = getCartTotal(cart)
   const totalItemCount = cart.reduce((sum, item) => sum + item.quantity, 0)
   const hasActiveFilter = selectedCategory !== 'ALL' || searchQuery.trim().length > 0
+  const heroBadgeText = storeInfo.address.trim()
+    ? `Katalog Resmi · ${storeInfo.address.trim()}`
+    : 'Katalog Resmi · Buka Sekarang'
 
   function handleResetFilters() {
     setSelectedCategory('ALL')
@@ -88,6 +113,21 @@ export function StorefrontPage({ isStaff }: { isStaff?: boolean | undefined } = 
     toast.success(`${item.productName} (${item.quantity} ${item.unitName}) ditambahkan ke keranjang`)
   }
 
+  function handleQuickAdd(product: StorefrontProduct) {
+    if (product.stockStatus === 'OUT_OF_STOCK') return
+    const defaultUnit = product.units.find((u) => u.isDefault) ?? product.units[0]
+    if (!defaultUnit) return
+    handleAddToCart({
+      productId: product.id,
+      productName: product.name,
+      unitId: defaultUnit.id,
+      unitName: defaultUnit.name,
+      unitPrice: defaultUnit.salePrice,
+      quantity: 1,
+      imageUrl: product.imageUrl,
+    })
+  }
+
   return (
     <div className="storefront">
       <StorefrontHeader
@@ -97,60 +137,88 @@ export function StorefrontPage({ isStaff }: { isStaff?: boolean | undefined } = 
         isStaff={isStaff}
       />
 
-      <section className="storefront-hero" aria-label="Pencarian dan kategori produk">
+      <section className="storefront-hero" aria-label="Sambutan toko">
         <div className="storefront-hero__inner">
-          <p className="storefront-intro__guide">
-            Pilih barang &amp; satuan yang dibutuhkan, lalu kirim pesanan langsung lewat WhatsApp — tanpa perlu bikin akun.
-          </p>
-
-          <div className="storefront-search">
-            <Search size={18} className="storefront-search__icon" aria-hidden="true" />
-            <input
-              type="search"
-              className="storefront-search__input"
-              placeholder="Cari gula, beras, minyak goreng..."
-              aria-label="Cari produk toko"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            {searchQuery.length > 0 && (
-              <button
-                type="button"
-                className="storefront-search__clear"
-                onClick={() => setSearchQuery('')}
-                aria-label="Hapus pencarian"
-              >
-                <X size={16} aria-hidden="true" />
-              </button>
-            )}
+          <div className="storefront-hero__pill">
+            <span className="storefront-hero__pill-dot" aria-hidden="true" />
+            <span>{heroBadgeText}</span>
           </div>
 
-          <div className="storefront-categories" role="region" aria-label="Kategori produk">
+          <h2 className="storefront-hero__title">
+            Kebutuhan rumah tangga, siap antar dari rak kami.
+          </h2>
+
+          <ul className="storefront-hero__trust">
+            <li>
+              <PackageCheck aria-hidden="true" />
+              <span>Stok Real-Time</span>
+            </li>
+            <li>
+              <Layers aria-hidden="true" />
+              <span>Bisa Ecer &amp; Grosir</span>
+            </li>
+            <li>
+              <MessageCircle aria-hidden="true" />
+              <span>Pesan Langsung WA</span>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section className="storefront-discovery" aria-label="Pencarian dan kategori produk">
+        <div className="storefront-search">
+          <Search size={18} className="storefront-search__icon" aria-hidden="true" />
+          <input
+            type="search"
+            className="storefront-search__input"
+            placeholder="Cari gula, beras, minyak goreng..."
+            aria-label="Cari produk toko"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery.length > 0 && (
             <button
               type="button"
-              className={`storefront-category-pill ${selectedCategory === 'ALL' ? 'storefront-category-pill--active' : ''}`}
-              aria-pressed={selectedCategory === 'ALL'}
-              onClick={() => setSelectedCategory('ALL')}
+              className="storefront-search__clear"
+              onClick={() => setSearchQuery('')}
+              aria-label="Hapus pencarian"
             >
-              Semua ({catalog.products.length})
+              <X size={16} aria-hidden="true" />
             </button>
-            {catalog.categories.map((cat) => (
-              <button
-                key={cat.id}
-                type="button"
-                className={`storefront-category-pill ${selectedCategory === cat.id ? 'storefront-category-pill--active' : ''}`}
-                aria-pressed={selectedCategory === cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
-              >
-                <span
-                  className="storefront-category-pill__dot"
-                  style={{ '--category-color': cat.color } as CSSProperties}
-                  aria-hidden="true"
-                />
-                <span>{cat.name}</span>
-              </button>
-            ))}
-          </div>
+          )}
+        </div>
+
+        <div className="storefront-categories" role="region" aria-label="Kategori produk">
+          <button
+            type="button"
+            className={`storefront-category-pill ${selectedCategory === 'ALL' ? 'storefront-category-pill--active' : ''}`}
+            aria-pressed={selectedCategory === 'ALL'}
+            onClick={() => setSelectedCategory('ALL')}
+          >
+            <span>Semua</span>
+            <span className="storefront-category-pill__count">
+              {catalog.products.length}
+            </span>
+          </button>
+          {catalog.categories.map((cat) => (
+            <button
+              key={cat.id}
+              type="button"
+              className={`storefront-category-pill ${selectedCategory === cat.id ? 'storefront-category-pill--active' : ''}`}
+              aria-pressed={selectedCategory === cat.id}
+              onClick={() => setSelectedCategory(cat.id)}
+            >
+              <span
+                className="storefront-category-pill__dot"
+                style={{ '--category-color': cat.color } as CSSProperties}
+                aria-hidden="true"
+              />
+              <span>{cat.name}</span>
+              <span className="storefront-category-pill__count">
+                {categoryCounts.get(cat.id) ?? 0}
+              </span>
+            </button>
+          ))}
         </div>
       </section>
 
@@ -193,15 +261,31 @@ export function StorefrontPage({ isStaff }: { isStaff?: boolean | undefined } = 
             )}
           </div>
         ) : (
-          <div className="storefront-grid">
-            {filteredProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onSelect={setSelectedProduct}
-              />
-            ))}
-          </div>
+          <>
+            <div className="storefront-catalog-bar">
+              <span>Menampilkan {filteredProducts.length} produk</span>
+              {hasActiveFilter && (
+                <button
+                  type="button"
+                  className="storefront-catalog-bar__clear"
+                  onClick={handleResetFilters}
+                >
+                  Tampilkan semua
+                </button>
+              )}
+            </div>
+            <div className="storefront-grid">
+              {filteredProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  cartQuantity={cartQuantityByProduct.get(product.id) ?? 0}
+                  onSelect={setSelectedProduct}
+                  onQuickAdd={handleQuickAdd}
+                />
+              ))}
+            </div>
+          </>
         )}
       </main>
 
@@ -213,14 +297,16 @@ export function StorefrontPage({ isStaff }: { isStaff?: boolean | undefined } = 
         >
           <span className="storefront-floating-cart__info">
             <ShoppingBag size={18} aria-hidden="true" />
-            <span className="storefront-floating-cart__count data-number">
+            <span className="storefront-floating-cart__count">
               {totalItemCount} Barang
             </span>
-            <span>Lihat Keranjang</span>
+            <span className="storefront-floating-cart__total">
+              {formatCurrency(cartTotal)}
+            </span>
           </span>
-          <span className="storefront-floating-cart__total data-number">
-            <span>{formatCurrency(cartTotal)}</span>
-            <ChevronRight size={18} aria-hidden="true" />
+          <span className="storefront-floating-cart__action">
+            <span>Lihat Keranjang</span>
+            <ArrowRight size={16} aria-hidden="true" />
           </span>
         </button>
       )}
