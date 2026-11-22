@@ -2,10 +2,8 @@ import { useEffect, useState, type CSSProperties } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   ExternalLink,
-  Layers,
   MapPin,
   MessageCircle,
-  PackageCheck,
   PackageOpen,
   Search,
   X,
@@ -99,7 +97,6 @@ export function StorefrontPage({ isStaff }: { isStaff?: boolean | undefined } = 
   })
 
   const hasActiveFilter = selectedCategory !== 'ALL' || searchQuery.trim().length > 0
-  const heroBadgeText = `Katalog Resmi · ${storeInfo.address}`
 
   function handleResetFilters() {
     setSelectedCategory('ALL')
@@ -116,45 +113,16 @@ export function StorefrontPage({ isStaff }: { isStaff?: boolean | undefined } = 
 
       <section className="storefront-hero" aria-label="Sambutan toko">
         <div className="storefront-hero__inner">
-          <div className="storefront-hero__content">
-            <div className="storefront-hero__pill">
-              <span className="storefront-hero__pill-dot" aria-hidden="true" />
-              <span>{heroBadgeText}</span>
-            </div>
-
-            <h2 className="storefront-hero__title">
-              Cek katalog &amp; ketersediaan barang sebelum mampir.
-            </h2>
-
-            <p className="storefront-hero__subtitle">
-              Lihat stok langsung dari rak kami, cek harga ecer maupun grosir, lalu tanyakan
-              detailnya lewat WhatsApp.
-            </p>
-
-            <ul className="storefront-hero__trust">
-              <li>
-                <PackageCheck aria-hidden="true" />
-                <span>Stok Real-Time di Rak</span>
-              </li>
-              <li>
-                <Layers aria-hidden="true" />
-                <span>Pilihan Ecer &amp; Grosir</span>
-              </li>
-              <li>
-                <MessageCircle aria-hidden="true" />
-                <span>Tanya Langsung WA</span>
-              </li>
-            </ul>
+          <div className="storefront-hero__mark" aria-hidden="true">
+            <BrandLogo variant="mark" tone="dark" />
           </div>
-
-          <div className="storefront-hero__brand">
-            <div className="storefront-hero__brand-badge">
-              <BrandLogo variant="mark" tone="dark" />
-            </div>
-            <div className="storefront-hero__brand-meta">
-              <strong className="storefront-hero__brand-name">Zaina Arsyi</strong>
-              <span className="storefront-hero__brand-sub">Toko Perabot Rumah · Kapuas</span>
-            </div>
+          <div className="storefront-hero__content">
+            <h2 className="storefront-hero__title">
+              Cek katalog &amp; ketersediaan barang.
+            </h2>
+            <p className="storefront-hero__meta">
+              Zaina Arsyi · Kuala Kapuas · Tanya stok via WhatsApp
+            </p>
           </div>
         </div>
       </section>
@@ -165,7 +133,7 @@ export function StorefrontPage({ isStaff }: { isStaff?: boolean | undefined } = 
           <input
             type="search"
             className="storefront-search__input"
-            placeholder="Cari gula, beras, minyak goreng..."
+            placeholder="Cari piring, wajan, wadah plastik..."
             aria-label="Cari produk toko"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}

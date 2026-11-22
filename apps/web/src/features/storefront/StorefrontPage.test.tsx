@@ -87,13 +87,11 @@ describe('StorefrontPage', () => {
     const { container } = renderStorefront()
 
     expect(
-      await screen.findByText('Cek katalog & ketersediaan barang sebelum mampir.'),
+      await screen.findByText('Cek katalog & ketersediaan barang.'),
     ).toBeInTheDocument()
-    expect(screen.getByText('Stok Real-Time di Rak')).toBeInTheDocument()
-    expect(screen.getByText('Pilihan Ecer & Grosir')).toBeInTheDocument()
-    expect(screen.getByText('Tanya Langsung WA')).toBeInTheDocument()
-    expect(screen.getByText('Zaina Arsyi')).toBeInTheDocument()
-    expect(screen.getByText('Toko Perabot Rumah · Kapuas')).toBeInTheDocument()
+    expect(
+      screen.getByText('Zaina Arsyi · Kuala Kapuas · Tanya stok via WhatsApp'),
+    ).toBeInTheDocument()
     expect(container.querySelectorAll('.brand-logo__mark')).toHaveLength(2)
 
     expect(await screen.findByText('Gula Pasir 1kg')).toBeInTheDocument()
@@ -125,7 +123,7 @@ describe('StorefrontPage', () => {
     renderStorefront(true)
 
     expect(
-      await screen.findByText('Cek katalog & ketersediaan barang sebelum mampir.'),
+      await screen.findByText('Cek katalog & ketersediaan barang.'),
     ).toBeInTheDocument()
     const staffLink = screen.getByRole('link', { name: /Panel Kasir/i })
     expect(staffLink).toHaveAttribute('href', '/dashboard')

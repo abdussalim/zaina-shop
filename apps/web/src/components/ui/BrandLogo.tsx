@@ -15,10 +15,10 @@ const TONE_PALETTE = {
   },
   dark: {
     awningFill: '#FFFDF8',
-    stripeFill: '#CBE2DA',
+    stripeFill: '#1F5146',
     stroke: '#FFFDF8',
-    blush: '#F2A48E',
-    blushOpacity: 0.92,
+    blush: '#F4A28C',
+    blushOpacity: 0.94,
   },
 } as const
 
