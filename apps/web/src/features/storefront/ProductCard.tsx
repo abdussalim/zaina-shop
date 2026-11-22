@@ -1,6 +1,19 @@
+import type { CSSProperties } from 'react'
 import { Plus } from 'lucide-react'
 import { formatCurrency } from '../../lib/format.js'
 import type { StorefrontProduct } from './types.js'
+
+function getAvailabilityLabel(status: StorefrontProduct['stockStatus']): string {
+  if (status === 'OUT_OF_STOCK') return 'Habis'
+  if (status === 'LOW') return 'Stok Menipis'
+  return 'Tersedia'
+}
+
+function getAvailabilityClass(status: StorefrontProduct['stockStatus']): string {
+  if (status === 'OUT_OF_STOCK') return 'storefront-stock-pill--out'
+  if (status === 'LOW') return 'storefront-stock-pill--low'
+  return 'storefront-stock-pill--ok'
+}
 
 export function ProductCard({
   product,
@@ -11,13 +24,17 @@ export function ProductCard({
 }) {
   const defaultUnit = product.units.find((u) => u.isDefault) ?? product.units[0]
   const isAvailable = product.stockStatus !== 'OUT_OF_STOCK'
+  const categoryStyle = {
+    '--category-color': product.categoryColor,
+  } as CSSProperties
 
   return (
     <div
-      className="storefront-card"
+      className={`storefront-card ${!isAvailable ? 'storefront-card--out' : ''}`}
       onClick={() => onSelect(product)}
       role="button"
       tabIndex={0}
+      style={categoryStyle}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
@@ -25,41 +42,51 @@ export function ProductCard({
         }
       }}
     >
-      <div className="storefront-card__thumb">
+      <div className="storefront-card__media">
         {product.imageUrl ? (
           <img src={product.imageUrl} alt={product.name} loading="lazy" />
         ) : (
-          <span className="storefront-card__placeholder">
-            {product.name.charAt(0).toUpperCase()}
-          </span>
+          <div className="storefront-card__placeholder">
+            <span className="storefront-card__monogram" aria-hidden="true">
+              {product.name.charAt(0).toUpperCase()}
+            </span>
+          </div>
         )}
       </div>
+
       <div className="storefront-card__body">
-        <span
-          className="badge"
-          style={{
-            alignSelf: 'flex-start',
-            fontSize: '0.65rem',
-            padding: '0.15rem 0.4rem',
-            backgroundColor: `${product.categoryColor}20`,
-            color: product.categoryColor,
-          }}
-        >
-          {product.categoryName}
-        </span>
-        <h3 className="storefront-card__title">{product.name}</h3>
-        <div className="storefront-card__price">
-          {defaultUnit ? formatCurrency(defaultUnit.salePrice) : '-'}
-          {defaultUnit && <span className="storefront-card__unit"> /{defaultUnit.name}</span>}
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25rem' }}>
-          <span style={{ fontSize: '0.7rem', color: isAvailable ? 'var(--olive-dark)' : 'var(--danger)' }}>
-            {isAvailable ? 'Tersedia' : 'Habis'}
+        <div className="storefront-card__meta">
+          <span className="storefront-card__category">
+            <span className="storefront-card__category-dot" aria-hidden="true" />
+            <span>{product.categoryName}</span>
           </span>
+          <span className={`storefront-stock-pill ${getAvailabilityClass(product.stockStatus)}`}>
+            <span className="storefront-stock-pill__dot" aria-hidden="true" />
+            <span>{getAvailabilityLabel(product.stockStatus)}</span>
+          </span>
+        </div>
+
+        <h3 className="storefront-card__title">{product.name}</h3>
+
+        {product.units.length > 1 && (
+          <span className="storefront-card__units-hint">
+            {product.units.length} pilihan satuan
+          </span>
+        )}
+
+        <div className="storefront-card__footer">
+          <div className="storefront-card__price-group">
+            <strong className="storefront-card__price data-number">
+              {defaultUnit ? formatCurrency(defaultUnit.salePrice) : '-'}
+            </strong>
+            {defaultUnit && (
+              <span className="storefront-card__unit">/ {defaultUnit.name}</span>
+            )}
+          </div>
+
           <button
             type="button"
-            className="btn btn--secondary"
-            style={{ minHeight: '2rem', height: '2rem', width: '2rem', padding: 0, borderRadius: '99rem' }}
+            className="button button--secondary storefront-card__cta"
             disabled={!isAvailable}
             onClick={(e) => {
               e.stopPropagation()
@@ -67,7 +94,8 @@ export function ProductCard({
             }}
             aria-label={`Pilih ${product.name}`}
           >
-            <Plus size={14} />
+            {isAvailable && <Plus size={15} aria-hidden="true" />}
+            <span>{isAvailable ? 'Pilih' : 'Habis'}</span>
           </button>
         </div>
       </div>

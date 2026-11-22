@@ -1,6 +1,7 @@
-import { useState } from 'react'
-import { Minus, Plus, Trash2, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { AlertCircle, MessageCircle, Minus, Plus, ShoppingBag, Trash2, X } from 'lucide-react'
 import { buildWhatsAppLink, formatWhatsAppOrder } from '@zaina/shared'
+import { Button } from '../../components/ui/Button.js'
 import { formatCurrency } from '../../lib/format.js'
 import type { CartItem, StorefrontInfo } from './types.js'
 
@@ -22,6 +23,16 @@ export function StorefrontCartSheet({
   const [customerName, setCustomerName] = useState('')
   const [addressOrNotes, setAddressOrNotes] = useState('')
   const [error, setError] = useState<string>()
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        onClose()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
 
   const total = cart.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0)
 
@@ -56,137 +67,175 @@ export function StorefrontCartSheet({
 
   return (
     <>
-      <div className="modal__overlay" onClick={onClose} />
-      <div className="modal modal--medium" style={{ padding: 'var(--space-4)', maxHeight: '90dvh' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2 style={{ fontSize: '1.1rem', margin: 0 }}>Keranjang Belanja ({cart.length})</h2>
-          <button type="button" className="btn btn--ghost" onClick={onClose} style={{ minHeight: '2.5rem' }} aria-label="Tutup keranjang">
-            <X size={20} />
+      <div className="modal__overlay" onClick={onClose} aria-hidden="true" />
+      <div
+        className="modal modal--medium storefront-sheet storefront-cart-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cart-sheet-title"
+      >
+        <div className="modal__handle" aria-hidden="true" />
+
+        <div className="storefront-sheet__header">
+          <h2 id="cart-sheet-title" className="storefront-sheet__title">
+            Keranjang Belanja ({cart.length})
+          </h2>
+          <button
+            type="button"
+            className="icon-button storefront-sheet__close"
+            onClick={onClose}
+            aria-label="Tutup keranjang"
+          >
+            <X size={20} aria-hidden="true" />
           </button>
         </div>
 
         {cart.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 'var(--space-8) var(--space-4)' }}>
-            <p style={{ color: 'var(--ink-soft)' }}>Keranjang Anda masih kosong</p>
+          <div className="storefront-sheet__body">
+            <div className="storefront-cart-empty">
+              <span className="storefront-cart-empty__icon" aria-hidden="true">
+                <ShoppingBag size={24} />
+              </span>
+              <p>Keranjang Anda masih kosong</p>
+              <small>Pilih barang di etalase terlebih dahulu untuk mulai memesan.</small>
+              <Button type="button" variant="secondary" onClick={onClose}>
+                Lihat Produk
+              </Button>
+            </div>
           </div>
         ) : (
-          <div style={{ display: 'grid', gap: 'var(--space-4)', marginTop: 'var(--space-3)' }}>
-            <div style={{ display: 'grid', gap: 'var(--space-2)', maxHeight: '35vh', overflowY: 'auto' }}>
-              {cart.map((item) => (
-                <div
-                  key={`${item.productId}-${item.unitId}`}
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr auto',
-                    gap: 'var(--space-2)',
-                    alignItems: 'center',
-                    padding: 'var(--space-2) 0',
-                    borderBottom: '1px solid var(--line)',
-                  }}
-                >
-                  <div>
-                    <h4 style={{ margin: 0, fontSize: '0.88rem' }}>{item.productName}</h4>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--ink-soft)' }}>
-                      {formatCurrency(item.unitPrice)} / {item.unitName}
-                    </span>
+          <>
+            <div className="storefront-sheet__body">
+              <div className="storefront-cart-list">
+                {cart.map((item) => (
+                  <div
+                    key={`${item.productId}-${item.unitId}`}
+                    className="storefront-cart-item"
+                  >
+                    <div className="storefront-cart-item__thumb" aria-hidden="true">
+                      {item.imageUrl ? (
+                        <img src={item.imageUrl} alt="" />
+                      ) : (
+                        <span>{item.productName.charAt(0).toUpperCase()}</span>
+                      )}
+                    </div>
+
+                    <div className="storefront-cart-item__info">
+                      <h4>{item.productName}</h4>
+                      <span className="storefront-cart-item__unit">
+                        {formatCurrency(item.unitPrice)} / {item.unitName}
+                      </span>
+                      <strong className="storefront-cart-item__subtotal data-number">
+                        {formatCurrency(item.unitPrice * item.quantity)}
+                      </strong>
+                    </div>
+
+                    <div className="storefront-cart-item__controls">
+                      <button
+                        type="button"
+                        className="button button--secondary storefront-cart-stepper__btn"
+                        onClick={() =>
+                          onUpdateQuantity(item.productId, item.unitId, item.quantity - 1)
+                        }
+                        aria-label={`Kurangi ${item.productName}`}
+                      >
+                        <Minus size={14} aria-hidden="true" />
+                      </button>
+                      <span className="storefront-cart-stepper__val data-number">
+                        {item.quantity}
+                      </span>
+                      <button
+                        type="button"
+                        className="button button--secondary storefront-cart-stepper__btn"
+                        onClick={() =>
+                          onUpdateQuantity(item.productId, item.unitId, item.quantity + 1)
+                        }
+                        aria-label={`Tambah ${item.productName}`}
+                      >
+                        <Plus size={14} aria-hidden="true" />
+                      </button>
+                      <button
+                        type="button"
+                        className="button button--ghost storefront-cart-item__remove"
+                        onClick={() => onRemoveItem(item.productId, item.unitId)}
+                        aria-label={`Hapus ${item.productName} dari keranjang`}
+                      >
+                        <Trash2 size={16} aria-hidden="true" />
+                      </button>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-                    <button
-                      type="button"
-                      className="btn btn--secondary"
-                      style={{ width: '2rem', minHeight: '2rem', padding: 0 }}
-                      onClick={() => onUpdateQuantity(item.productId, item.unitId, item.quantity - 1)}
-                      aria-label={`Kurangi ${item.productName}`}
-                    >
-                      <Minus size={14} />
-                    </button>
-                    <span style={{ minWidth: '1.5rem', textAlign: 'center', fontWeight: 600, fontSize: '0.88rem' }}>
-                      {item.quantity}
-                    </span>
-                    <button
-                      type="button"
-                      className="btn btn--secondary"
-                      style={{ width: '2rem', minHeight: '2rem', padding: 0 }}
-                      onClick={() => onUpdateQuantity(item.productId, item.unitId, item.quantity + 1)}
-                      aria-label={`Tambah ${item.productName}`}
-                    >
-                      <Plus size={14} />
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn--ghost"
-                      style={{ width: '2rem', minHeight: '2rem', padding: 0, color: 'var(--danger)' }}
-                      onClick={() => onRemoveItem(item.productId, item.unitId)}
-                      aria-label={`Hapus ${item.productName} dari keranjang`}
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
+                ))}
+              </div>
+
+              <div className="storefront-cart-summary">
+                <span>Total Belanja</span>
+                <strong className="data-number">{formatCurrency(total)}</strong>
+              </div>
+
+              {error && (
+                <div className="form-alert" role="alert">
+                  <AlertCircle size={18} aria-hidden="true" />
+                  <span>{error}</span>
                 </div>
-              ))}
-            </div>
+              )}
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontWeight: 600 }}>Total Belanja:</span>
-              <strong style={{ fontSize: '1.2rem', color: 'var(--olive-dark)' }}>{formatCurrency(total)}</strong>
-            </div>
+              <div className="storefront-cart-form">
+                <div className={`field ${error && !customerName.trim() ? 'field--error' : ''}`}>
+                  <label htmlFor="storefront-customer-name" className="field__label">
+                    Nama Anda <span className="storefront-required">*</span>
+                  </label>
+                  <input
+                    id="storefront-customer-name"
+                    type="text"
+                    placeholder="Contoh: Ibu Ani"
+                    value={customerName}
+                    onChange={(e) => {
+                      setCustomerName(e.target.value)
+                      if (error) setError(undefined)
+                    }}
+                  />
+                  <p className="field__message">
+                    Agar penjual mudah mengenali pesanan Anda
+                  </p>
+                </div>
 
-            {error && (
-              <div style={{ color: 'var(--danger)', fontSize: '0.8rem', background: '#ffebee', padding: '0.5rem', borderRadius: '4px' }}>
-                {error}
-              </div>
-            )}
-
-            <div style={{ display: 'grid', gap: 'var(--space-2)' }}>
-              <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.2rem' }}>
-                  Nama Anda <span style={{ color: 'var(--danger)' }}>*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="Contoh: Ibu Ani"
-                  value={customerName}
-                  onChange={(e) => {
-                    setCustomerName(e.target.value)
-                    if (error) setError(undefined)
-                  }}
-                  style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--line)' }}
-                />
-              </div>
-
-              <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.2rem' }}>
-                  Alamat Pengiriman / Catatan
-                </label>
-                <textarea
-                  placeholder="Contoh: Jl. Mawar No. 5, tolong antar sebelum jam 3"
-                  value={addressOrNotes}
-                  onChange={(e) => setAddressOrNotes(e.target.value)}
-                  rows={2}
-                  style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--line)' }}
-                />
+                <div className="field">
+                  <label htmlFor="storefront-customer-notes" className="field__label">
+                    Alamat / Catatan Pengiriman
+                  </label>
+                  <textarea
+                    id="storefront-customer-notes"
+                    placeholder="Contoh: Jl. Mawar No. 5, antar sebelum jam 3 sore"
+                    value={addressOrNotes}
+                    onChange={(e) => setAddressOrNotes(e.target.value)}
+                    rows={2}
+                  />
+                  <p className="field__message">
+                    Opsional — isi jika perlu diantar atau ada catatan khusus
+                  </p>
+                </div>
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-              <button
-                type="button"
-                className="btn btn--ghost"
-                onClick={onClearCart}
-                style={{ flex: '0 0 auto' }}
-              >
-                Kosongkan
-              </button>
-              <button
-                type="button"
-                className="btn btn--primary"
-                onClick={handleCheckoutWhatsApp}
-                style={{ flex: 1, backgroundColor: '#25D366', borderColor: '#25D366' }}
-              >
-                Pesan via WhatsApp
-              </button>
+            <div className="storefront-sheet__footer">
+              <div className="storefront-cart-sheet__actions">
+                <Button type="button" variant="ghost" onClick={onClearCart}>
+                  Kosongkan
+                </Button>
+                <button
+                  type="button"
+                  className="button storefront-wa-btn"
+                  onClick={handleCheckoutWhatsApp}
+                >
+                  <MessageCircle size={18} aria-hidden="true" />
+                  <span>Pesan via WhatsApp</span>
+                </button>
+              </div>
+              <p className="storefront-cart-sheet__reassurance">
+                Otomatis membuka WhatsApp dengan rincian pesanan Anda
+              </p>
             </div>
-          </div>
+          </>
         )}
       </div>
     </>

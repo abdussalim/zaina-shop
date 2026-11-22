@@ -1,47 +1,87 @@
 :root {
-  --canvas: #f4f0e7;
-  --paper: #fffdf8;
-  --paper-strong: #ffffff;
-  --ink: #272821;
-  --ink-soft: #66675e;
-  --line: #dcd6c8;
-  --line-strong: #c8c0af;
-  --olive: #626a45;
-  --olive-dark: #454d30;
-  --olive-pale: #e6ead9;
-  --terracotta: #b85f43;
-  --terracotta-dark: #8f422d;
-  --terracotta-pale: #f6e2da;
-  --porcelain: #607d80;
-  --porcelain-pale: #e0eaeb;
-  --brass: #aa8246;
-  --success: #3f7353;
-  --danger: #a44338;
-  --warning: #986c2b;
+  /* Core Surfaces (Botanical Minimalist) */
+  --surface-base: #f6f7f5;
+  --surface-elevated: #ffffff;
+  --surface-subtle: #eef1ee;
 
+  /* Backward-compatible surface aliases */
+  --canvas: var(--surface-base);
+  --paper: var(--surface-elevated);
+  --paper-strong: var(--surface-elevated);
+
+  /* Ink & Typography Hierarchy */
+  --ink: #161a17;
+  --ink-soft: #5a635d;
+  --ink-muted: #828b85;
+
+  /* Borders & Hairlines */
+  --line: #e3e7e3;
+  --line-strong: #cdd3ce;
+
+  /* Brand & Botanical Accents */
+  --brand: #1f5146;
+  --brand-dark: #163b33;
+  --brand-soft: #e6f1ee;
+
+  /* Backward-compatible brand aliases */
+  --olive: var(--brand);
+  --olive-dark: var(--brand-dark);
+  --olive-pale: var(--brand-soft);
+
+  /* Channel & Secondary Accents */
+  --whatsapp: #1da851;
+  --whatsapp-dark: #168a41;
+  --terracotta: #c05a3f;
+  --terracotta-dark: #96412b;
+  --terracotta-pale: #fbeae5;
+  --porcelain: #3f6d73;
+  --porcelain-pale: #e5f0f2;
+  --brass: #a67c37;
+
+  /* Semantic Feedback */
+  --success: #1d7a4c;
+  --success-soft: #e6f5ed;
+  --warning: #b46912;
+  --warning-soft: #fef3e0;
+  --danger: #c63a32;
+  --danger-soft: #fcebe9;
+
+  /* Typography */
   --font-body: 'Instrument Sans Variable', 'Segoe UI', sans-serif;
   --font-data: 'JetBrains Mono Variable', Consolas, monospace;
 
+  /* Spacing Scale */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
   --space-4: 1rem;
   --space-5: 1.25rem;
   --space-6: 1.5rem;
+  --space-7: 1.75rem;
   --space-8: 2rem;
+  --space-9: 2.25rem;
   --space-10: 2.5rem;
+  --space-11: 2.75rem;
   --space-12: 3rem;
 
-  --radius-sm: 0.4rem;
-  --radius-md: 0.75rem;
-  --radius-lg: 1.1rem;
-  --shadow-float: 0 18px 45px rgb(55 46 34 / 0.12);
-  --shadow-soft: 0 8px 24px rgb(55 46 34 / 0.07);
+  /* Radii */
+  --radius-sm: 0.625rem;
+  --radius-md: 1rem;
+  --radius-lg: 1.35rem;
+  --radius-pill: 9999px;
+
+  /* Elevation Shadows */
+  --shadow-soft: 0 1px 2px rgb(22 26 23 / 0.04), 0 6px 20px rgb(22 26 23 / 0.05);
+  --shadow-card: 0 1px 2px rgb(22 26 23 / 0.04), 0 4px 14px rgb(22 26 23 / 0.04);
+  --shadow-float: 0 16px 40px rgb(22 26 23 / 0.14);
+  --shadow-sheet: 0 -8px 32px rgb(22 26 23 / 0.12);
+
+  /* Safe Areas & Layout */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
   --tap-size: 3rem;
-  --content-max: 96rem;
+  --content-max: 84rem;
   color-scheme: light;
 }

@@ -3,6 +3,7 @@ import '@fontsource-variable/jetbrains-mono'
 import './styles/tokens.css'
 import './styles/global.css'
 import './styles/features.css'
+import './styles/storefront.css'
 
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'

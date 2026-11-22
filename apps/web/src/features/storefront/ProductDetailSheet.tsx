@@ -1,7 +1,20 @@
-import { useState } from 'react'
-import { Minus, Plus, X } from 'lucide-react'
+import { useEffect, useState, type CSSProperties } from 'react'
+import { Check, Minus, Plus, X } from 'lucide-react'
+import { Button } from '../../components/ui/Button.js'
 import { formatCurrency } from '../../lib/format.js'
 import type { CartItem, StorefrontProduct } from './types.js'
+
+function getAvailabilityLabel(status: StorefrontProduct['stockStatus']): string {
+  if (status === 'OUT_OF_STOCK') return 'Habis'
+  if (status === 'LOW') return 'Stok Menipis'
+  return 'Tersedia'
+}
+
+function getAvailabilityClass(status: StorefrontProduct['stockStatus']): string {
+  if (status === 'OUT_OF_STOCK') return 'storefront-stock-pill--out'
+  if (status === 'LOW') return 'storefront-stock-pill--low'
+  return 'storefront-stock-pill--ok'
+}
 
 export function ProductDetailSheet({
   product,
@@ -17,12 +30,28 @@ export function ProductDetailSheet({
   )
   const [quantity, setQuantity] = useState(1)
 
-  const selectedUnit = product.units.find((u) => u.id === selectedUnitId) ?? product.units[0]
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        onClose()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
+
+  const selectedUnit =
+    product.units.find((u) => u.id === selectedUnitId) ?? product.units[0]
 
   if (!selectedUnit) return null
 
+  const isOutOfStock = product.stockStatus === 'OUT_OF_STOCK'
+  const categoryStyle = {
+    '--category-color': product.categoryColor,
+  } as CSSProperties
+
   function handleAdd() {
-    if (!selectedUnit) return
+    if (!selectedUnit || isOutOfStock) return
     onAddToCart({
       productId: product.id,
       productName: product.name,
@@ -37,85 +66,143 @@ export function ProductDetailSheet({
 
   return (
     <>
-      <div className="modal__overlay" onClick={onClose} />
-      <div className="modal modal--small" style={{ padding: 'var(--space-4)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2 style={{ fontSize: '1.1rem', margin: 0 }}>Detail Produk</h2>
-          <button type="button" className="btn btn--ghost" onClick={onClose} style={{ minHeight: '2.5rem' }} aria-label="Tutup">
-            <X size={20} />
+      <div className="modal__overlay" onClick={onClose} aria-hidden="true" />
+      <div
+        className="modal modal--small storefront-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="product-detail-title"
+        style={categoryStyle}
+      >
+        <div className="modal__handle" aria-hidden="true" />
+
+        <div className="storefront-sheet__header">
+          <h2 id="product-detail-title" className="storefront-sheet__title">
+            Detail Produk
+          </h2>
+          <button
+            type="button"
+            className="icon-button storefront-sheet__close"
+            onClick={onClose}
+            aria-label="Tutup"
+          >
+            <X size={20} aria-hidden="true" />
           </button>
         </div>
 
-        <div style={{ display: 'grid', gap: 'var(--space-3)', marginTop: 'var(--space-3)' }}>
-          {product.imageUrl && (
-            <div style={{ width: '100%', height: '180px', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
-              <img src={product.imageUrl} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            </div>
-          )}
-
-          <div>
-            <h3 style={{ fontSize: '1.2rem', margin: '0 0 0.25rem 0' }}>{product.name}</h3>
-            <span style={{ fontSize: '0.8rem', color: 'var(--ink-soft)' }}>Kategori: {product.categoryName}</span>
+        <div className="storefront-sheet__body">
+          <div className="storefront-detail__media">
+            {product.imageUrl ? (
+              <img src={product.imageUrl} alt={product.name} />
+            ) : (
+              <div className="storefront-detail__placeholder">
+                <span className="storefront-detail__monogram" aria-hidden="true">
+                  {product.name.charAt(0).toUpperCase()}
+                </span>
+              </div>
+            )}
           </div>
 
-          <div>
-            <label style={{ fontSize: '0.82rem', fontWeight: 600, display: 'block', marginBottom: '0.4rem' }}>
-              Pilih Satuan:
-            </label>
-            <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
-              {product.units.map((unit) => (
-                <button
-                  key={unit.id}
-                  type="button"
-                  className={`category-pill ${unit.id === selectedUnit.id ? 'category-pill--active' : ''}`}
-                  onClick={() => setSelectedUnitId(unit.id)}
-                >
-                  {unit.name} ({formatCurrency(unit.salePrice)})
-                </button>
-              ))}
+          <div className="storefront-detail__info">
+            <div className="storefront-detail__badges">
+              <span className="storefront-detail__cat-badge">
+                <span className="storefront-card__category-dot" aria-hidden="true" />
+                <span>{product.categoryName}</span>
+              </span>
+              <span
+                className={`storefront-stock-pill ${getAvailabilityClass(product.stockStatus)}`}
+              >
+                <span className="storefront-stock-pill__dot" aria-hidden="true" />
+                <span>{getAvailabilityLabel(product.stockStatus)}</span>
+              </span>
+            </div>
+            <h3 className="storefront-detail__name">{product.name}</h3>
+          </div>
+
+          <div className="storefront-detail__section">
+            <div className="storefront-detail__section-head">
+              <span className="storefront-detail__label">Pilih Satuan</span>
+              {product.units.length > 1 && (
+                <span className="storefront-detail__hint">
+                  Harga menyesuaikan satuan
+                </span>
+              )}
+            </div>
+
+            <div className="storefront-unit-grid">
+              {product.units.map((unit) => {
+                const isActive = unit.id === selectedUnit.id
+                return (
+                  <button
+                    key={unit.id}
+                    type="button"
+                    className={`storefront-unit-card ${isActive ? 'storefront-unit-card--active' : ''}`}
+                    aria-pressed={isActive}
+                    onClick={() => setSelectedUnitId(unit.id)}
+                  >
+                    <span className="storefront-unit-card__top">
+                      <span className="storefront-unit-card__name">{unit.name}</span>
+                      {isActive && (
+                        <span className="storefront-unit-card__check" aria-hidden="true">
+                          <Check size={12} />
+                        </span>
+                      )}
+                    </span>
+                    <span className="storefront-unit-card__price data-number">
+                      {formatCurrency(unit.salePrice)}
+                    </span>
+                  </button>
+                )
+              })}
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBlock: 'var(--space-2)' }}>
-            <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Jumlah:</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+          <div className="storefront-detail__qty-row">
+            <span className="storefront-detail__label">Jumlah</span>
+            <div className="storefront-stepper">
               <button
                 type="button"
-                className="btn btn--secondary"
-                style={{ width: '2.5rem', minHeight: '2.5rem', padding: 0 }}
+                className="button button--secondary storefront-stepper__btn"
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                disabled={quantity <= 1}
                 aria-label="Kurangi jumlah"
               >
-                <Minus size={16} />
+                <Minus size={18} aria-hidden="true" />
               </button>
-              <span style={{ minWidth: '2rem', textAlign: 'center', fontWeight: 700 }}>{quantity}</span>
+              <span className="storefront-stepper__value data-number" aria-live="polite">
+                {quantity}
+              </span>
               <button
                 type="button"
-                className="btn btn--secondary"
-                style={{ width: '2.5rem', minHeight: '2.5rem', padding: 0 }}
+                className="button button--secondary storefront-stepper__btn"
                 onClick={() => setQuantity((q) => q + 1)}
                 aria-label="Tambah jumlah"
               >
-                <Plus size={16} />
+                <Plus size={18} aria-hidden="true" />
               </button>
             </div>
           </div>
+        </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--line)', paddingTop: 'var(--space-3)' }}>
-            <div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--ink-soft)', display: 'block' }}>Total Harga:</span>
-              <strong style={{ fontSize: '1.2rem', color: 'var(--olive-dark)' }}>
+        <div className="storefront-sheet__footer">
+          <div className="storefront-detail__footer-row">
+            <div className="storefront-sheet__subtotal">
+              <span className="storefront-sheet__subtotal-label">Subtotal</span>
+              <strong className="storefront-sheet__subtotal-value data-number">
                 {formatCurrency(selectedUnit.salePrice * quantity)}
               </strong>
             </div>
-            <button
+
+            <Button
               type="button"
-              className="btn btn--primary"
-              disabled={product.stockStatus === 'OUT_OF_STOCK'}
+              variant="primary"
+              size="large"
+              className="storefront-detail__add-btn"
+              disabled={isOutOfStock}
               onClick={handleAdd}
             >
-              Tambah ke Keranjang
-            </button>
+              {isOutOfStock ? 'Stok Habis' : 'Tambah ke Keranjang'}
+            </Button>
           </div>
         </div>
       </div>
