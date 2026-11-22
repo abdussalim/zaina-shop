@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react'
-import { Package, Plus } from 'lucide-react'
+import { MessageCircle, Package } from 'lucide-react'
 import { formatCurrency } from '../../lib/format.js'
 import type { StorefrontProduct } from './types.js'
 
@@ -17,31 +17,17 @@ function getAvailabilityClass(status: StorefrontProduct['stockStatus']): string 
 
 export function ProductCard({
   product,
-  cartQuantity = 0,
   onSelect,
-  onQuickAdd,
 }: {
   product: StorefrontProduct
-  cartQuantity?: number
   onSelect: (product: StorefrontProduct) => void
-  onQuickAdd: (product: StorefrontProduct) => void
 }) {
   const defaultUnit = product.units.find((u) => u.isDefault) ?? product.units[0]
   const isAvailable = product.stockStatus !== 'OUT_OF_STOCK'
   const hasMultipleUnits = product.units.length > 1
-  const canQuickAdd = isAvailable && product.units.length === 1 && Boolean(defaultUnit)
   const categoryStyle = {
     '--category-color': product.categoryColor,
   } as CSSProperties
-
-  function handleActionClick() {
-    if (!isAvailable) return
-    if (canQuickAdd) {
-      onQuickAdd(product)
-      return
-    }
-    onSelect(product)
-  }
 
   return (
     <article
@@ -61,12 +47,6 @@ export function ProductCard({
             <span className="storefront-stock-pill__dot" aria-hidden="true" />
             <span>{getAvailabilityLabel(product.stockStatus)}</span>
           </span>
-
-          {cartQuantity > 0 && (
-            <span className="storefront-card__cart-badge">
-              {cartQuantity} di keranjang
-            </span>
-          )}
 
           {product.imageUrl ? (
             <img src={product.imageUrl} alt={product.name} loading="lazy" />
@@ -113,18 +93,12 @@ export function ProductCard({
 
         <button
           type="button"
-          className={`storefront-card__add-btn ${cartQuantity > 0 ? 'storefront-card__add-btn--active' : ''}`}
-          disabled={!isAvailable}
-          onClick={handleActionClick}
-          aria-label={
-            !isAvailable
-              ? `${product.name} habis`
-              : canQuickAdd
-                ? `Tambah ${product.name} ke keranjang`
-                : `Pilih ${product.name}`
-          }
+          className="storefront-card__inquiry-btn"
+          onClick={() => onSelect(product)}
+          aria-label={`Tanya ${product.name}`}
         >
-          <Plus size={18} aria-hidden="true" />
+          <MessageCircle size={16} aria-hidden="true" />
+          <span>Tanya</span>
         </button>
       </div>
     </article>

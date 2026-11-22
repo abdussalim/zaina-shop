@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildWhatsAppLink,
+  formatWhatsAppGeneralInquiry,
   formatWhatsAppOrder,
+  formatWhatsAppProductInquiry,
   normalizeWhatsAppPhone,
   type WhatsAppOrderInput,
 } from './whatsapp.js'
@@ -51,9 +53,70 @@ describe('formatWhatsAppOrder', () => {
   })
 })
 
+describe('formatWhatsAppProductInquiry', () => {
+  it('formats product inquiry with unit, Rupiah price, question, and custom note', () => {
+    const text = formatWhatsAppProductInquiry({
+      storeName: 'Toko Zaina',
+      productName: 'Gula Pasir 1kg',
+      unitName: 'dus',
+      unitPrice: 165_000,
+      question: 'Boleh info harga grosir / beli banyak?',
+      customNote: 'Saya rencana ambil 3 dus sore ini.',
+    })
+
+    expect(text).toContain('Halo Toko Zaina, saya ingin menanyakan produk berikut:')
+    expect(text).toContain('*Produk:* Gula Pasir 1kg')
+    expect(text).toContain('*Satuan:* dus (Rp 165.000)')
+    expect(text).toContain('*Pertanyaan:* Boleh info harga grosir / beli banyak?')
+    expect(text).toContain('*Catatan:* Saya rencana ambil 3 dus sore ini.')
+  })
+
+  it('omits optional unit, price, and custom note when not provided', () => {
+    const text = formatWhatsAppProductInquiry({
+      storeName: 'Toko Zaina',
+      productName: 'Panci Kukus',
+      question: 'Apakah barang ini masih tersedia di toko?',
+    })
+
+    expect(text).toContain('*Produk:* Panci Kukus')
+    expect(text).toContain('*Pertanyaan:* Apakah barang ini masih tersedia di toko?')
+    expect(text).not.toContain('*Satuan:*')
+    expect(text).not.toContain('*Harga:*')
+    expect(text).not.toContain('*Catatan:*')
+  })
+})
+
+describe('formatWhatsAppGeneralInquiry', () => {
+  it('formats general store inquiry with topic and optional custom message', () => {
+    const text = formatWhatsAppGeneralInquiry({
+      storeName: 'Toko Zaina',
+      topic: 'Tanya jam buka toko',
+      customMessage: 'Apakah hari Minggu buka sampai sore?',
+    })
+
+    expect(text).toContain('Halo Toko Zaina, saya ingin bertanya:')
+    expect(text).toContain('*Topik:* Tanya jam buka toko')
+    expect(text).toContain('*Pesan:* Apakah hari Minggu buka sampai sore?')
+  })
+
+  it('omits custom message when empty', () => {
+    const text = formatWhatsAppGeneralInquiry({
+      storeName: 'Toko Zaina',
+      topic: 'Tanya petunjuk arah ke toko',
+      customMessage: '   ',
+    })
+
+    expect(text).toContain('*Topik:* Tanya petunjuk arah ke toko')
+    expect(text).not.toContain('*Pesan:*')
+  })
+})
+
 describe('buildWhatsAppLink', () => {
   it('encodes message and generates wa.me URL', () => {
     const url = buildWhatsAppLink('0812-3456-7890', 'Halo Toko Zaina')
     expect(url).toBe('https://wa.me/6281234567890?text=Halo%20Toko%20Zaina')
+
+    const zainaUrl = buildWhatsAppLink('088744982845', 'Halo Toko Zaina')
+    expect(zainaUrl).toBe('https://wa.me/6288744982845?text=Halo%20Toko%20Zaina')
   })
 })

@@ -9,6 +9,11 @@ export async function registerServiceWorker(
   if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return undefined
   if (!import.meta.env.PROD) return undefined
   const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' })
+
+  if (registration.waiting && navigator.serviceWorker.controller) {
+    lifecycle.onNeedRefresh?.(registration)
+  }
+
   registration.addEventListener('updatefound', () => {
     const worker = registration.installing
     if (!worker) return
@@ -19,6 +24,15 @@ export async function registerServiceWorker(
       }
     })
   })
+
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        void registration.update?.()
+      }
+    })
+  }
+
   return registration
 }
 

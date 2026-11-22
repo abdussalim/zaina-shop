@@ -1,58 +1,66 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
-  ArrowRight,
+  ExternalLink,
   Layers,
+  MapPin,
   MessageCircle,
   PackageCheck,
   PackageOpen,
   Search,
-  ShoppingBag,
   X,
 } from 'lucide-react'
-import { toast } from 'sonner'
 import { apiRequest } from '../../api/client.js'
 import { Button } from '../../components/ui/Button.js'
 import { ErrorState, LoadingState } from '../../components/ui/States.js'
-import { formatCurrency } from '../../lib/format.js'
-import {
-  addItemToCart,
-  getCartTotal,
-  loadCartFromStorage,
-  removeItemFromCart,
-  saveCartToStorage,
-  updateCartItemQuantity,
-} from './cartStore.js'
 import { ProductCard } from './ProductCard.js'
 import { ProductDetailSheet } from './ProductDetailSheet.js'
-import { StorefrontCartSheet } from './StorefrontCartSheet.js'
 import { StorefrontHeader } from './StorefrontHeader.js'
+import { StorefrontInquirySheet } from './StorefrontInquirySheet.js'
 import type {
-  CartItem,
   StorefrontCatalogResponse,
   StorefrontInfo,
   StorefrontProduct,
 } from './types.js'
 
+const DEFAULT_STORE_NAME = 'Toko Zaina'
+const DEFAULT_STORE_ADDRESS =
+  'Jl. Patih Rumbih No. 35, Selat Tengah, Kec. Selat, Kabupaten Kapuas, Kalimantan Tengah 73516'
+const DEFAULT_STORE_PHONE = '088744982845'
+
+function buildGoogleMapsEmbedUrl(address: string): string {
+  if (address === DEFAULT_STORE_ADDRESS) {
+    return 'https://maps.google.com/maps?q=Jl.+Patih+Rumbih+No.+35,+Selat+Tengah,+Kec.+Selat,+Kabupaten+Kapuas,+Kalimantan+Tengah+73516&t=&z=16&ie=UTF8&iwloc=&output=embed'
+  }
+  const params = new URLSearchParams({
+    q: address,
+    t: '',
+    z: '16',
+    ie: 'UTF8',
+    iwloc: '',
+    output: 'embed',
+  })
+  return `https://maps.google.com/maps?${params.toString()}`
+}
+
+function buildGoogleMapsSearchUrl(address: string): string {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
+}
+
 export function StorefrontPage({ isStaff }: { isStaff?: boolean | undefined } = {}) {
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedProduct, setSelectedProduct] = useState<StorefrontProduct | null>(null)
-  const [cart, setCart] = useState<CartItem[]>(() => loadCartFromStorage())
-  const [isCartOpen, setIsCartOpen] = useState(false)
+  const [isInquiryOpen, setIsInquiryOpen] = useState(false)
 
   useEffect(() => {
-    saveCartToStorage(cart)
-  }, [cart])
-
-  useEffect(() => {
-    if (!selectedProduct && !isCartOpen) return
+    if (!selectedProduct && !isInquiryOpen) return
     const prevOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     return () => {
       document.body.style.overflow = prevOverflow
     }
-  }, [selectedProduct, isCartOpen])
+  }, [selectedProduct, isInquiryOpen])
 
   const storeInfoQuery = useQuery({
     queryKey: ['storefront', 'info'],
@@ -64,10 +72,11 @@ export function StorefrontPage({ isStaff }: { isStaff?: boolean | undefined } = 
     queryFn: () => apiRequest<StorefrontCatalogResponse>('/api/v1/storefront/catalog'),
   })
 
-  const storeInfo = storeInfoQuery.data ?? {
-    storeName: 'Toko Zaina',
-    address: '',
-    phone: '',
+  const rawInfo = storeInfoQuery.data
+  const storeInfo: StorefrontInfo = {
+    storeName: rawInfo?.storeName?.trim() || DEFAULT_STORE_NAME,
+    address: rawInfo?.address?.trim() || DEFAULT_STORE_ADDRESS,
+    phone: rawInfo?.phone?.trim() || DEFAULT_STORE_PHONE,
   }
 
   const catalog = catalogQuery.data ?? { categories: [], products: [] }
@@ -75,14 +84,6 @@ export function StorefrontPage({ isStaff }: { isStaff?: boolean | undefined } = 
   const categoryCounts = new Map<string, number>()
   for (const product of catalog.products) {
     categoryCounts.set(product.categoryId, (categoryCounts.get(product.categoryId) ?? 0) + 1)
-  }
-
-  const cartQuantityByProduct = new Map<string, number>()
-  for (const item of cart) {
-    cartQuantityByProduct.set(
-      item.productId,
-      (cartQuantityByProduct.get(item.productId) ?? 0) + item.quantity,
-    )
   }
 
   const filteredProducts = catalog.products.filter((product) => {
@@ -96,44 +97,19 @@ export function StorefrontPage({ isStaff }: { isStaff?: boolean | undefined } = 
     return matchesCategory && matchesQuery
   })
 
-  const cartTotal = getCartTotal(cart)
-  const totalItemCount = cart.reduce((sum, item) => sum + item.quantity, 0)
   const hasActiveFilter = selectedCategory !== 'ALL' || searchQuery.trim().length > 0
-  const heroBadgeText = storeInfo.address.trim()
-    ? `Katalog Resmi · ${storeInfo.address.trim()}`
-    : 'Katalog Resmi · Buka Sekarang'
+  const heroBadgeText = `Katalog Resmi · ${storeInfo.address}`
 
   function handleResetFilters() {
     setSelectedCategory('ALL')
     setSearchQuery('')
   }
 
-  function handleAddToCart(item: CartItem) {
-    setCart((prev) => addItemToCart(prev, item))
-    toast.success(`${item.productName} (${item.quantity} ${item.unitName}) ditambahkan ke keranjang`)
-  }
-
-  function handleQuickAdd(product: StorefrontProduct) {
-    if (product.stockStatus === 'OUT_OF_STOCK') return
-    const defaultUnit = product.units.find((u) => u.isDefault) ?? product.units[0]
-    if (!defaultUnit) return
-    handleAddToCart({
-      productId: product.id,
-      productName: product.name,
-      unitId: defaultUnit.id,
-      unitName: defaultUnit.name,
-      unitPrice: defaultUnit.salePrice,
-      quantity: 1,
-      imageUrl: product.imageUrl,
-    })
-  }
-
   return (
     <div className="storefront">
       <StorefrontHeader
         storeInfo={storeInfo}
-        cartCount={totalItemCount}
-        onOpenCart={() => setIsCartOpen(true)}
+        onOpenInquiry={() => setIsInquiryOpen(true)}
         isStaff={isStaff}
       />
 
@@ -145,21 +121,26 @@ export function StorefrontPage({ isStaff }: { isStaff?: boolean | undefined } = 
           </div>
 
           <h2 className="storefront-hero__title">
-            Kebutuhan rumah tangga, siap antar dari rak kami.
+            Cek katalog &amp; ketersediaan barang sebelum mampir.
           </h2>
+
+          <p className="storefront-hero__subtitle">
+            Lihat stok langsung dari rak kami, cek harga ecer maupun grosir, lalu tanyakan
+            detailnya lewat WhatsApp.
+          </p>
 
           <ul className="storefront-hero__trust">
             <li>
               <PackageCheck aria-hidden="true" />
-              <span>Stok Real-Time</span>
+              <span>Stok Real-Time di Rak</span>
             </li>
             <li>
               <Layers aria-hidden="true" />
-              <span>Bisa Ecer &amp; Grosir</span>
+              <span>Pilihan Ecer &amp; Grosir</span>
             </li>
             <li>
               <MessageCircle aria-hidden="true" />
-              <span>Pesan Langsung WA</span>
+              <span>Tanya Langsung WA</span>
             </li>
           </ul>
         </div>
@@ -279,58 +260,91 @@ export function StorefrontPage({ isStaff }: { isStaff?: boolean | undefined } = 
                 <ProductCard
                   key={product.id}
                   product={product}
-                  cartQuantity={cartQuantityByProduct.get(product.id) ?? 0}
                   onSelect={setSelectedProduct}
-                  onQuickAdd={handleQuickAdd}
                 />
               ))}
             </div>
           </>
         )}
+
+        <section className="storefront-visit" aria-label="Kunjungi Toko Kami">
+          <div className="storefront-visit__card">
+            <div className="storefront-visit__head">
+              <span className="storefront-visit__eyebrow">
+                <MapPin size={14} aria-hidden="true" />
+                <span>Lokasi Toko</span>
+              </span>
+              <h2 className="storefront-visit__title">Mampir langsung ke Toko Zaina</h2>
+              <p className="storefront-visit__address">{storeInfo.address}</p>
+              <p className="storefront-visit__note">
+                Saat ini melayani pembelian langsung di toko. Cek stok dulu lewat WhatsApp
+                agar makin praktis.
+              </p>
+            </div>
+
+            <div className="storefront-visit__map-wrap">
+              <iframe
+                title="Peta lokasi Toko Zaina"
+                className="storefront-visit__map"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                src={buildGoogleMapsEmbedUrl(storeInfo.address)}
+              />
+            </div>
+
+            <div className="storefront-visit__actions">
+              <a
+                href={buildGoogleMapsSearchUrl(storeInfo.address)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="button button--primary storefront-visit__btn"
+              >
+                <ExternalLink size={17} aria-hidden="true" />
+                <span>Buka di Google Maps</span>
+              </a>
+
+              <button
+                type="button"
+                className="button button--secondary storefront-visit__btn"
+                onClick={() => setIsInquiryOpen(true)}
+              >
+                <MessageCircle size={17} aria-hidden="true" />
+                <span>Tanya via WhatsApp</span>
+              </button>
+            </div>
+          </div>
+        </section>
       </main>
 
-      {totalItemCount > 0 && !isCartOpen && (
+      <footer className="storefront-footer">
+        <p>
+          {storeInfo.storeName} · {storeInfo.address}
+        </p>
+      </footer>
+
+      {!selectedProduct && !isInquiryOpen && (
         <button
           type="button"
-          className="storefront-floating-cart"
-          onClick={() => setIsCartOpen(true)}
+          className="storefront-floating-wa"
+          onClick={() => setIsInquiryOpen(true)}
         >
-          <span className="storefront-floating-cart__info">
-            <ShoppingBag size={18} aria-hidden="true" />
-            <span className="storefront-floating-cart__count">
-              {totalItemCount} Barang
-            </span>
-            <span className="storefront-floating-cart__total">
-              {formatCurrency(cartTotal)}
-            </span>
-          </span>
-          <span className="storefront-floating-cart__action">
-            <span>Lihat Keranjang</span>
-            <ArrowRight size={16} aria-hidden="true" />
-          </span>
+          <MessageCircle size={18} aria-hidden="true" />
+          <span>Tanya Toko (WA)</span>
         </button>
       )}
 
       {selectedProduct && (
         <ProductDetailSheet
           product={selectedProduct}
+          storeInfo={storeInfo}
           onClose={() => setSelectedProduct(null)}
-          onAddToCart={handleAddToCart}
         />
       )}
 
-      {isCartOpen && (
-        <StorefrontCartSheet
-          cart={cart}
+      {isInquiryOpen && (
+        <StorefrontInquirySheet
           storeInfo={storeInfo}
-          onClose={() => setIsCartOpen(false)}
-          onUpdateQuantity={(prodId, unitId, qty) =>
-            setCart((prev) => updateCartItemQuantity(prev, prodId, unitId, qty))
-          }
-          onRemoveItem={(prodId, unitId) =>
-            setCart((prev) => removeItemFromCart(prev, prodId, unitId))
-          }
-          onClearCart={() => setCart([])}
+          onClose={() => setIsInquiryOpen(false)}
         />
       )}
     </div>

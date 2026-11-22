@@ -1,6 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-labelledby="title">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
   <title>Toko Zaina</title>
-  <rect width="192" height="192" rx="42" fill="#454d30"/>
-  <circle cx="96" cy="96" r="58" fill="none" stroke="#fffdf8" stroke-width="6"/>
-  <path d="M64 66h64l-42 60h44" fill="none" stroke="#fffdf8" stroke-linecap="round" stroke-linejoin="round" stroke-width="12"/>
+  <rect width="512" height="512" rx="116" fill="#1f5146" />
+  <g fill="none" stroke="#f6f7f5" stroke-linecap="round" stroke-linejoin="round">
+    <path
+      d="M256 114L120 214v158q0 30 30 30h212q30 0 30-30V214Z"
+      stroke-width="26"
+    />
+    <path d="M198 238h116L198 342h116" stroke-width="28" />
+  </g>
+  <g fill="#e8927c">
+    <path d="M255 186c-14 0-23-12-19-24 12 0 20 10 19 24Z" />
+    <path d="M257 186c14 0 23-12 19-24-12 0-20 10-19 24Z" />
+  </g>
 </svg>

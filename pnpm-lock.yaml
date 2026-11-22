@@ -130,10 +130,22 @@ importers:
       vitest:
         specifier: 4.1.10
         version: 4.1.10(jsdom@30.0.1)(vite@8.2.1(esbuild@0.28.2)(terser@5.51.2))
+      workbox-cacheable-response:
+        specifier: ^7.3.0
+        version: 7.4.1
+      workbox-core:
+        specifier: ^7.3.0
+        version: 7.4.1
+      workbox-expiration:
+        specifier: ^7.3.0
+        version: 7.4.1
       workbox-precaching:
         specifier: ^7.3.0
         version: 7.4.1
       workbox-routing:
+        specifier: ^7.3.0
+        version: 7.4.1
+      workbox-strategies:
         specifier: ^7.3.0
         version: 7.4.1
 

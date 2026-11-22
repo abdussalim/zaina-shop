@@ -1,8 +1,15 @@
 import { useEffect, useState, type CSSProperties } from 'react'
-import { Check, Minus, Package, Plus, X } from 'lucide-react'
-import { Button } from '../../components/ui/Button.js'
+import { Check, MessageCircle, Package, X } from 'lucide-react'
+import { buildWhatsAppLink, formatWhatsAppProductInquiry } from '@zaina/shared'
 import { formatCurrency } from '../../lib/format.js'
-import type { CartItem, StorefrontProduct } from './types.js'
+import type { StorefrontInfo, StorefrontProduct } from './types.js'
+
+const QUICK_QUESTIONS = [
+  'Apakah barang ini masih tersedia di toko?',
+  'Boleh info harga grosir / beli banyak?',
+  'Apakah ada pilihan warna / ukuran lain?',
+  'Saya ingin mampir mengambil barang ini, boleh disisihkan?',
+] as const
 
 function getAvailabilityLabel(status: StorefrontProduct['stockStatus']): string {
   if (status === 'OUT_OF_STOCK') return 'Habis'
@@ -18,17 +25,18 @@ function getAvailabilityClass(status: StorefrontProduct['stockStatus']): string 
 
 export function ProductDetailSheet({
   product,
+  storeInfo,
   onClose,
-  onAddToCart,
 }: {
   product: StorefrontProduct
+  storeInfo: StorefrontInfo
   onClose: () => void
-  onAddToCart: (item: CartItem) => void
 }) {
   const [selectedUnitId, setSelectedUnitId] = useState(
     product.units.find((u) => u.isDefault)?.id ?? product.units[0]?.id ?? '',
   )
-  const [quantity, setQuantity] = useState(1)
+  const [selectedQuestion, setSelectedQuestion] = useState<string>(QUICK_QUESTIONS[0])
+  const [customNote, setCustomNote] = useState('')
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -45,23 +53,23 @@ export function ProductDetailSheet({
 
   if (!selectedUnit) return null
 
-  const isOutOfStock = product.stockStatus === 'OUT_OF_STOCK'
   const categoryStyle = {
     '--category-color': product.categoryColor,
   } as CSSProperties
 
-  function handleAdd() {
-    if (!selectedUnit || isOutOfStock) return
-    onAddToCart({
-      productId: product.id,
+  function handleAskWhatsApp() {
+    if (!selectedUnit) return
+    const phone = storeInfo.phone.trim() || '088744982845'
+    const message = formatWhatsAppProductInquiry({
+      storeName: storeInfo.storeName.trim() || 'Toko Zaina',
       productName: product.name,
-      unitId: selectedUnit.id,
       unitName: selectedUnit.name,
       unitPrice: selectedUnit.salePrice,
-      quantity,
-      imageUrl: product.imageUrl,
+      question: selectedQuestion,
+      ...(customNote.trim() ? { customNote: customNote.trim() } : {}),
     })
-    onClose()
+    const waUrl = buildWhatsAppLink(phone, message)
+    window.open(waUrl, '_blank', 'noopener,noreferrer')
   }
 
   return (
@@ -165,53 +173,57 @@ export function ProductDetailSheet({
             </div>
           </div>
 
-          <div className="storefront-detail__qty-row">
-            <span className="storefront-detail__label">Jumlah</span>
-            <div className="storefront-stepper">
-              <button
-                type="button"
-                className="button button--secondary storefront-stepper__btn"
-                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                disabled={quantity <= 1}
-                aria-label="Kurangi jumlah"
-              >
-                <Minus size={18} aria-hidden="true" />
-              </button>
-              <span className="storefront-stepper__value" aria-live="polite">
-                {quantity}
-              </span>
-              <button
-                type="button"
-                className="button button--secondary storefront-stepper__btn"
-                onClick={() => setQuantity((q) => q + 1)}
-                aria-label="Tambah jumlah"
-              >
-                <Plus size={18} aria-hidden="true" />
-              </button>
+          <div className="storefront-detail__section">
+            <div className="storefront-detail__section-head">
+              <span className="storefront-detail__label">Pertanyaan Cepat</span>
+              <span className="storefront-detail__hint">Pilih topik pertanyaan</span>
             </div>
+
+            <div className="storefront-chip-grid" role="group" aria-label="Pertanyaan Cepat">
+              {QUICK_QUESTIONS.map((question) => {
+                const isActive = selectedQuestion === question
+                return (
+                  <button
+                    key={question}
+                    type="button"
+                    className={`storefront-chip ${isActive ? 'storefront-chip--active' : ''}`}
+                    aria-pressed={isActive}
+                    onClick={() => setSelectedQuestion(question)}
+                  >
+                    {question}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          <div className="field">
+            <label htmlFor="product-inquiry-note" className="field__label">
+              Tulis pertanyaan lain (opsional)
+            </label>
+            <textarea
+              id="product-inquiry-note"
+              className="storefront-inquiry-note"
+              rows={2}
+              placeholder="Contoh: Kira-kira jam 4 sore masih ada?"
+              value={customNote}
+              onChange={(e) => setCustomNote(e.target.value)}
+            />
           </div>
         </div>
 
         <div className="storefront-sheet__footer">
-          <div className="storefront-detail__footer-row">
-            <div className="storefront-sheet__subtotal">
-              <span className="storefront-sheet__subtotal-label">Subtotal</span>
-              <strong className="storefront-sheet__subtotal-value">
-                {formatCurrency(selectedUnit.salePrice * quantity)}
-              </strong>
-            </div>
-
-            <Button
-              type="button"
-              variant="primary"
-              size="large"
-              className="storefront-detail__add-btn"
-              disabled={isOutOfStock}
-              onClick={handleAdd}
-            >
-              {isOutOfStock ? 'Stok Habis' : 'Tambah ke Keranjang'}
-            </Button>
-          </div>
+          <button
+            type="button"
+            className="button button--large storefront-wa-btn"
+            onClick={handleAskWhatsApp}
+          >
+            <MessageCircle size={18} aria-hidden="true" />
+            <span>Tanya via WhatsApp</span>
+          </button>
+          <p className="storefront-sheet__helper">
+            Pesan otomatis berisi detail barang &amp; pertanyaan Anda
+          </p>
         </div>
       </div>
     </>

@@ -1,16 +1,19 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { StorefrontPage } from './StorefrontPage.js'
+
+const REAL_ADDRESS =
+  'Jl. Patih Rumbih No. 35, Selat Tengah, Kec. Selat, Kabupaten Kapuas, Kalimantan Tengah 73516'
 
 vi.mock('../../api/client.js', () => ({
   apiRequest: vi.fn((url: string) => {
     if (url.includes('/info')) {
       return Promise.resolve({
-        storeName: 'Toko Zaina Test',
-        address: 'Jl. Ahmad Yani',
-        phone: '08123456789',
+        storeName: 'Toko Zaina',
+        address: REAL_ADDRESS,
+        phone: '088744982845',
       })
     }
     if (url.includes('/catalog')) {
@@ -68,21 +71,48 @@ function renderStorefront(isStaff?: boolean) {
 }
 
 describe('StorefrontPage', () => {
+  let openSpy: ReturnType<typeof vi.spyOn>
+
   beforeEach(() => {
     localStorage.clear()
     document.body.style.overflow = ''
+    openSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
   })
 
-  it('renders boutique hero, store header, and catalog products', async () => {
-    renderStorefront()
+  afterEach(() => {
+    openSpy.mockRestore()
+  })
 
-    expect(await screen.findByText('Toko Zaina Test')).toBeInTheDocument()
+  it('renders boutique hero without cart/delivery copy, plus store map and catalog products', async () => {
+    const { container } = renderStorefront()
+
     expect(
-      screen.getByText('Kebutuhan rumah tangga, siap antar dari rak kami.'),
+      await screen.findByText('Cek katalog & ketersediaan barang sebelum mampir.'),
     ).toBeInTheDocument()
+    expect(screen.getByText('Stok Real-Time di Rak')).toBeInTheDocument()
+    expect(screen.getByText('Pilihan Ecer & Grosir')).toBeInTheDocument()
+    expect(screen.getByText('Tanya Langsung WA')).toBeInTheDocument()
+
     expect(await screen.findByText('Gula Pasir 1kg')).toBeInTheDocument()
     expect(screen.getByText(/Rp\s*17\.000/)).toBeInTheDocument()
     expect(screen.getByText('2 satuan')).toBeInTheDocument()
+
+    // No cart UI or delivery wording anywhere
+    expect(screen.queryByRole('button', { name: /Keranjang/i })).not.toBeInTheDocument()
+    expect(container.textContent).not.toMatch(/keranjang/i)
+    expect(container.textContent).not.toMatch(/\bantar\b|pengantaran/i)
+
+    // Store address & embedded Google Map iframe
+    expect(screen.getByText('Mampir langsung ke Toko Zaina')).toBeInTheDocument()
+    const visitSection = screen.getByRole('region', { name: 'Kunjungi Toko Kami' })
+    expect(within(visitSection).getByText(REAL_ADDRESS)).toBeInTheDocument()
+    const mapFrame = screen.getByTitle('Peta lokasi Toko Zaina')
+    expect(mapFrame).toHaveAttribute('src', expect.stringContaining('maps.google.com/maps'))
+    expect(mapFrame).toHaveAttribute('src', expect.stringContaining('Patih+Rumbih'))
+
+    const mapsLink = screen.getByRole('link', { name: /Buka di Google Maps/i })
+    expect(mapsLink).toHaveAttribute('href', expect.stringContaining('google.com/maps/search'))
+    expect(mapsLink).toHaveAttribute('target', '_blank')
 
     const staffLink = screen.getByRole('link', { name: /Staf/i })
     expect(staffLink).toHaveAttribute('href', '/login')
@@ -91,60 +121,80 @@ describe('StorefrontPage', () => {
   it('links staff header button to /dashboard when isStaff is true', async () => {
     renderStorefront(true)
 
-    expect(await screen.findByText('Toko Zaina Test')).toBeInTheDocument()
+    expect(
+      await screen.findByText('Cek katalog & ketersediaan barang sebelum mampir.'),
+    ).toBeInTheDocument()
     const staffLink = screen.getByRole('link', { name: /Panel Kasir/i })
     expect(staffLink).toHaveAttribute('href', '/dashboard')
   })
 
-  it('quick-adds single-unit product straight to cart without opening modal', async () => {
+  it('opens product detail sheet, picks unit & quick question, and launches WhatsApp link', async () => {
     renderStorefront()
 
-    const quickAddBtn = await screen.findByRole('button', {
-      name: 'Tambah Air Mineral 600ml ke keranjang',
+    const tanyaBtn = await screen.findByRole('button', {
+      name: 'Tanya Gula Pasir 1kg',
     })
-    fireEvent.click(quickAddBtn)
+    fireEvent.click(tanyaBtn)
 
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    expect(screen.getByText('1 di keranjang')).toBeInTheDocument()
-    expect(screen.getByText('1 Barang')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Lihat Keranjang/i })).toBeInTheDocument()
-  })
-
-  it('opens product detail sheet, switches unit, adds to cart, and validates checkout', async () => {
-    renderStorefront()
-
-    const selectButton = await screen.findByRole('button', {
-      name: 'Pilih Gula Pasir 1kg',
-    })
-    fireEvent.click(selectButton)
-
-    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    const dialog = screen.getByRole('dialog')
+    expect(dialog).toBeInTheDocument()
     expect(screen.getByText('Detail Produk')).toBeInTheDocument()
     expect(document.body.style.overflow).toBe('hidden')
 
-    fireEvent.click(screen.getByRole('button', { name: /dus/i }))
-    fireEvent.click(screen.getByRole('button', { name: 'Tambah jumlah' }))
-    expect(screen.getByText(/Rp\s*330\.000/)).toBeInTheDocument()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Tambah ke Keranjang' }))
-
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    expect(document.body.style.overflow).toBe('')
-    expect(screen.getByText('2 Barang')).toBeInTheDocument()
-
-    fireEvent.click(screen.getByRole('button', { name: /Lihat Keranjang/i }))
-
-    expect(screen.getByRole('dialog')).toBeInTheDocument()
-    expect(screen.getByText('Keranjang Belanja (1)')).toBeInTheDocument()
-    expect(screen.getByText(/165\.000 \/ dus/)).toBeInTheDocument()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Pesan via WhatsApp' }))
-    expect(screen.getByRole('alert')).toHaveTextContent(
-      'Mohon isi nama Anda terlebih dahulu',
+    fireEvent.click(within(dialog).getByRole('button', { name: /dus/i }))
+    fireEvent.click(
+      within(dialog).getByRole('button', {
+        name: 'Boleh info harga grosir / beli banyak?',
+      }),
     )
+    fireEvent.change(
+      within(dialog).getByLabelText('Tulis pertanyaan lain (opsional)'),
+      { target: { value: 'Saya mau ambil 2 dus sore ini' } },
+    )
+
+    fireEvent.click(within(dialog).getByRole('button', { name: /Tanya via WhatsApp/i }))
+
+    expect(openSpy).toHaveBeenCalledTimes(1)
+    const [waUrl, target, features] = openSpy.mock.calls[0]!
+    expect(waUrl).toContain('https://wa.me/6288744982845?text=')
+    expect(waUrl).toContain(encodeURIComponent('Gula Pasir 1kg'))
+    expect(waUrl).toContain(encodeURIComponent('dus'))
+    expect(waUrl).toContain(encodeURIComponent('Boleh info harga grosir / beli banyak?'))
+    expect(waUrl).toContain(encodeURIComponent('Saya mau ambil 2 dus sore ini'))
+    expect(target).toBe('_blank')
+    expect(features).toBe('noopener,noreferrer')
 
     fireEvent.keyDown(window, { key: 'Escape' })
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(document.body.style.overflow).toBe('')
+  })
+
+  it('opens general WhatsApp inquiry sheet and sends topic inquiry', async () => {
+    renderStorefront()
+
+    await screen.findByText('Gula Pasir 1kg')
+    fireEvent.click(screen.getByRole('button', { name: 'Tanya Toko via WhatsApp' }))
+
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByText('Tanya Toko via WhatsApp')).toBeInTheDocument()
+
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: 'Tanya petunjuk arah ke toko' }),
+    )
+    fireEvent.change(
+      within(dialog).getByLabelText('Detail pertanyaan (opsional)'),
+      { target: { value: 'Patokan dari bundaran besar sebelah mana ya?' } },
+    )
+
+    fireEvent.click(within(dialog).getByRole('button', { name: /Kirim ke WhatsApp/i }))
+
+    expect(openSpy).toHaveBeenCalledTimes(1)
+    const [waUrl] = openSpy.mock.calls[0]!
+    expect(waUrl).toContain('https://wa.me/6288744982845?text=')
+    expect(waUrl).toContain(encodeURIComponent('Tanya petunjuk arah ke toko'))
+    expect(waUrl).toContain(
+      encodeURIComponent('Patokan dari bundaran besar sebelah mana ya?'),
+    )
   })
 
   it('filters products and resets search from empty state', async () => {

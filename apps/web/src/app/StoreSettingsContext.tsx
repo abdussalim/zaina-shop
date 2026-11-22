@@ -4,8 +4,8 @@ import type { StoreSettings } from '../api/types.js'
 
 export const defaultStoreSettings: StoreSettings = {
   storeName: 'Toko Zaina',
-  address: null,
-  phone: null,
+  address: 'Jl. Patih Rumbih No. 35, Selat Tengah, Kec. Selat, Kabupaten Kapuas, Kalimantan Tengah 73516',
+  phone: '088744982845',
   timezone: 'Asia/Jakarta',
   defaultMinimumStock: 5,
 }

@@ -1,4 +1,4 @@
-import { ShoppingBag, User } from 'lucide-react'
+import { MessageCircle, User } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import type { StorefrontInfo } from './types.js'
 
@@ -15,13 +15,11 @@ function getStoreMonogram(storeName: string): string {
 
 export function StorefrontHeader({
   storeInfo,
-  cartCount,
-  onOpenCart,
+  onOpenInquiry,
   isStaff,
 }: {
   storeInfo: StorefrontInfo
-  cartCount: number
-  onOpenCart: () => void
+  onOpenInquiry: () => void
   isStaff?: boolean | undefined
 }) {
   const displayName = storeInfo.storeName || 'Toko Zaina'
@@ -35,7 +33,7 @@ export function StorefrontHeader({
           </span>
           <div className="storefront-brand__text">
             <h1>{displayName}</h1>
-            <p>{storeInfo.address || 'Belanja mudah & pesan via WhatsApp'}</p>
+            <p>{storeInfo.address}</p>
           </div>
         </div>
 
@@ -50,21 +48,12 @@ export function StorefrontHeader({
 
           <button
             type="button"
-            onClick={onOpenCart}
-            className="storefront-cart-trigger"
-            aria-label={
-              cartCount > 0
-                ? `Keranjang Belanja, ${cartCount} barang`
-                : 'Keranjang Belanja'
-            }
+            onClick={onOpenInquiry}
+            className="storefront-header-wa"
+            aria-label="Tanya Toko via WhatsApp"
           >
-            <ShoppingBag size={18} aria-hidden="true" />
-            <span className="storefront-cart-trigger__label">Keranjang</span>
-            {cartCount > 0 && (
-              <span className="storefront-cart-trigger__badge data-number">
-                {cartCount}
-              </span>
-            )}
+            <MessageCircle size={17} aria-hidden="true" />
+            <span>Tanya WA</span>
           </button>
         </nav>
       </div>

@@ -15,8 +15,8 @@ INSERT OR IGNORE INTO store_settings (id, store_name, address, phone, timezone, 
 VALUES (
   1,
   'Toko Zaina',
-  'Jl. Pasar No. 12',
-  '081234567890',
+  'Jl. Patih Rumbih No. 35, Selat Tengah, Kec. Selat, Kabupaten Kapuas, Kalimantan Tengah 73516',
+  '088744982845',
   'Asia/Jakarta',
   5
 );
