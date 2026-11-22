@@ -158,20 +158,33 @@
   z-index: 1;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--space-4);
   width: 100%;
   max-width: 100%;
+  min-height: 10.5rem;
   margin-inline: auto;
-  padding: var(--space-4) max(clamp(1rem, 3vw, 2.75rem), var(--safe-right)) 2.75rem max(clamp(1rem, 3vw, 2.75rem), var(--safe-left));
+  padding: var(--space-6) max(clamp(1rem, 3vw, 2.75rem), var(--safe-right)) 3.5rem max(clamp(1rem, 3vw, 2.75rem), var(--safe-left));
 }
 
 .storefront-hero__mark {
+  position: relative;
   display: grid;
   place-items: center;
-  width: 3.6rem;
-  height: 2.9rem;
-  flex: 0 0 3.6rem;
-  filter: drop-shadow(0 6px 16px rgb(10 28 24 / 0.22));
+  width: 4.5rem;
+  height: 3.6rem;
+  flex: 0 0 4.5rem;
+  filter: drop-shadow(0 10px 24px rgb(10 28 24 / 0.24));
+}
+
+.storefront-hero__mark::before {
+  content: '';
+  position: absolute;
+  inset: -1.1rem;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(255 253 248 / 0.14) 0%, transparent 68%);
+  pointer-events: none;
 }
 
 .storefront-hero__mark .brand-logo__mark {
@@ -181,25 +194,26 @@
 
 .storefront-hero__content {
   display: grid;
-  gap: 0.3rem;
+  gap: 0.45rem;
   min-width: 0;
 }
 
 .storefront-hero__title {
   margin: 0;
+  max-width: 22ch;
   color: #ffffff;
-  font-size: clamp(1.22rem, 4.4vw, 1.85rem);
-  font-weight: 750;
-  line-height: 1.2;
-  letter-spacing: -0.025em;
+  font-size: clamp(1.38rem, 4.6vw, 2.3rem);
+  font-weight: 800;
+  line-height: 1.16;
+  letter-spacing: -0.028em;
 }
 
 .storefront-hero__meta {
   margin: 0;
-  color: rgb(255 253 248 / 0.8);
-  font-size: 0.8rem;
+  color: rgb(255 253 248 / 0.82);
+  font-size: 0.84rem;
   font-weight: 500;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
 /* Floating Search & Category Discovery Bridging Hero to Catalog */
@@ -1129,18 +1143,24 @@
   }
 
   .storefront-hero__inner {
-    gap: var(--space-5);
-    padding: var(--space-5) clamp(1.5rem, 3vw, 2.75rem) 3.1rem;
+    gap: var(--space-8);
+    min-height: 15.5rem;
+    padding: var(--space-10) clamp(1.5rem, 3vw, 2.75rem) 4.75rem;
   }
 
   .storefront-hero__mark {
-    width: 4.85rem;
-    height: 3.9rem;
-    flex: 0 0 4.85rem;
+    width: 9rem;
+    height: 7.2rem;
+    flex: 0 0 9rem;
+    margin-right: clamp(0.5rem, 2.5vw, 2.5rem);
+  }
+
+  .storefront-hero__mark::before {
+    inset: -2.25rem;
   }
 
   .storefront-hero__meta {
-    font-size: 0.88rem;
+    font-size: 0.94rem;
   }
 
   .storefront-discovery {
@@ -1202,6 +1222,16 @@
 }
 
 @media (min-width: 1025px) {
+  .storefront-hero__inner {
+    min-height: 17rem;
+  }
+
+  .storefront-hero__mark {
+    width: 10.5rem;
+    height: 8.4rem;
+    flex: 0 0 10.5rem;
+  }
+
   .storefront-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }

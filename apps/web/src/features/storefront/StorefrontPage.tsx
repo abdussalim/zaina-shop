@@ -113,9 +113,6 @@ export function StorefrontPage({ isStaff }: { isStaff?: boolean | undefined } = 
 
       <section className="storefront-hero" aria-label="Sambutan toko">
         <div className="storefront-hero__inner">
-          <div className="storefront-hero__mark" aria-hidden="true">
-            <BrandLogo variant="mark" tone="dark" />
-          </div>
           <div className="storefront-hero__content">
             <h2 className="storefront-hero__title">
               Cek katalog &amp; ketersediaan barang.
@@ -123,6 +120,9 @@ export function StorefrontPage({ isStaff }: { isStaff?: boolean | undefined } = 
             <p className="storefront-hero__meta">
               Zaina Arsyi · Kuala Kapuas · Tanya stok via WhatsApp
             </p>
+          </div>
+          <div className="storefront-hero__mark" aria-hidden="true">
+            <BrandLogo variant="mark" tone="dark" />
           </div>
         </div>
       </section>
