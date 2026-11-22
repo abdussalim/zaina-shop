@@ -963,6 +963,47 @@ h2 {
   gap: var(--space-2);
 }
 
+/* Non-floating slim inline install bar (never overlaps page content) */
+.pwa-prompt.pwa-prompt--inline {
+  position: relative;
+  z-index: 35;
+  top: auto;
+  right: auto;
+  bottom: auto;
+  left: auto;
+  width: 100%;
+  max-width: none;
+  padding: 0.45rem max(clamp(1rem, 3vw, 2.75rem), var(--safe-right)) 0.45rem max(clamp(1rem, 3vw, 2.75rem), var(--safe-left));
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--brand-soft);
+  box-shadow: none;
+}
+
+.pwa-prompt--inline .pwa-prompt__copy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15rem 0.6rem;
+}
+
+.pwa-prompt--inline strong {
+  font-size: 0.84rem;
+  color: var(--brand-dark);
+}
+
+.pwa-prompt--inline span {
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+}
+
+.pwa-prompt--inline .button--small {
+  min-height: 2.35rem;
+  padding-block: 0.35rem;
+  font-size: 0.78rem;
+}
+
 /* Login */
 .login-page {
   display: grid;
@@ -1102,7 +1143,7 @@ input[type='number'] {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .pwa-prompt {
+  .pwa-prompt:not(.pwa-prompt--inline) {
     top: calc(4.75rem + var(--safe-top));
     right: var(--space-4);
     bottom: auto;
@@ -1217,7 +1258,7 @@ input[type='number'] {
     text-transform: uppercase;
   }
 
-  .pwa-prompt {
+  .pwa-prompt:not(.pwa-prompt--inline) {
     top: auto;
     right: auto;
     bottom: 1.25rem;

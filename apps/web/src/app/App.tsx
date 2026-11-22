@@ -137,8 +137,8 @@ export function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <RoutedApp />
         <PwaLifecycle />
+        <RoutedApp />
         <Toaster position="top-right" richColors closeButton />
       </BrowserRouter>
     </QueryClientProvider>

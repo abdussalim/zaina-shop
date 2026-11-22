@@ -171,25 +171,80 @@
   position: relative;
   display: grid;
   place-items: center;
-  width: 4.5rem;
-  height: 3.6rem;
-  flex: 0 0 4.5rem;
-  filter: drop-shadow(0 10px 24px rgb(10 28 24 / 0.24));
+  width: 5.5rem;
+  height: 5.5rem;
+  flex: 0 0 5.5rem;
 }
 
 .storefront-hero__mark::before {
   content: '';
   position: absolute;
-  inset: -1.1rem;
-  z-index: -1;
+  inset: -0.95rem;
+  z-index: 0;
   border-radius: 50%;
-  background: radial-gradient(circle, rgb(255 253 248 / 0.14) 0%, transparent 68%);
+  background: radial-gradient(circle, rgb(255 253 248 / 0.16) 0%, transparent 68%);
   pointer-events: none;
 }
 
-.storefront-hero__mark .brand-logo__mark {
+.hero-logo-medallion {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
   width: 100%;
   height: 100%;
+  padding: 18%;
+  border: 0;
+  border-radius: 50%;
+  background: #fffdf8;
+  box-shadow:
+    0 16px 36px rgb(10 28 24 / 0.28),
+    0 0 0 5px rgb(255 253 248 / 0.15);
+  cursor: pointer;
+  transform-origin: center bottom;
+  transition: box-shadow 200ms ease, transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.hero-logo-medallion:hover {
+  box-shadow:
+    0 20px 44px rgb(10 28 24 / 0.32),
+    0 0 0 7px rgb(255 253 248 / 0.22);
+}
+
+.hero-logo-medallion--tuing {
+  animation: hero-logo-tuing 920ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.hero-logo-medallion__svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.hero-logo__layer {
+  transition: transform 120ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+@keyframes hero-logo-tuing {
+  0% {
+    transform: translateY(0) scale(1, 1);
+  }
+  18% {
+    transform: translateY(3px) scale(1.09, 0.9);
+  }
+  42% {
+    transform: translateY(-9px) scale(0.93, 1.09);
+  }
+  64% {
+    transform: translateY(2px) scale(1.05, 0.95);
+  }
+  82% {
+    transform: translateY(-3px) scale(0.98, 1.03);
+  }
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
 }
 
 .storefront-hero__content {
@@ -1149,14 +1204,14 @@
   }
 
   .storefront-hero__mark {
-    width: 9rem;
-    height: 7.2rem;
-    flex: 0 0 9rem;
+    width: 9.25rem;
+    height: 9.25rem;
+    flex: 0 0 9.25rem;
     margin-right: clamp(0.5rem, 2.5vw, 2.5rem);
   }
 
   .storefront-hero__mark::before {
-    inset: -2.25rem;
+    inset: -1.75rem;
   }
 
   .storefront-hero__meta {
@@ -1228,7 +1283,7 @@
 
   .storefront-hero__mark {
     width: 10.5rem;
-    height: 8.4rem;
+    height: 10.5rem;
     flex: 0 0 10.5rem;
   }
 

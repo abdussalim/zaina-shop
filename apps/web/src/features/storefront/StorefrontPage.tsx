@@ -9,8 +9,8 @@ import {
   X,
 } from 'lucide-react'
 import { apiRequest } from '../../api/client.js'
-import { BrandLogo } from '../../components/ui/BrandLogo.js'
 import { Button } from '../../components/ui/Button.js'
+import { InteractiveHeroLogo } from '../../components/ui/InteractiveHeroLogo.js'
 import { ErrorState, LoadingState } from '../../components/ui/States.js'
 import { ProductCard } from './ProductCard.js'
 import { ProductDetailSheet } from './ProductDetailSheet.js'
@@ -121,8 +121,8 @@ export function StorefrontPage({ isStaff }: { isStaff?: boolean | undefined } = 
               Zaina Arsyi · Kuala Kapuas · Tanya stok via WhatsApp
             </p>
           </div>
-          <div className="storefront-hero__mark" aria-hidden="true">
-            <BrandLogo variant="mark" tone="dark" />
+          <div className="storefront-hero__mark">
+            <InteractiveHeroLogo />
           </div>
         </div>
       </section>
