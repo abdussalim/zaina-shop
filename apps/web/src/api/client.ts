@@ -60,6 +60,8 @@ export async function apiRequest<T>(
     if (
       response.status === 401 &&
       path !== '/api/v1/auth/login' &&
+      path !== '/api/v1/auth/session' &&
+      path !== '/api/v1/auth/logout' &&
       typeof window !== 'undefined'
     ) {
       window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT))

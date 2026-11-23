@@ -9,8 +9,8 @@ import {
   BarChart3,
   Store,
 } from 'lucide-react'
-import { NavLink, Outlet } from 'react-router-dom'
-import { Suspense } from 'react'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { Suspense, useState } from 'react'
 
 import { apiRequest } from '../api/client.js'
 import type { StoreSettings } from '../api/types.js'
@@ -59,13 +59,24 @@ function ShellContent({
   onLoggedOut: () => void
 }) {
   const { status, clearSnapshot } = useConnectivity()
+  const navigate = useNavigate()
+  const [loggingOut, setLoggingOut] = useState(false)
+
   async function logout() {
+    if (loggingOut) return
+    setLoggingOut(true)
     try {
       await apiRequest('/api/v1/auth/logout', { method: 'POST' })
-    } finally {
-      await clearSnapshot()
-      onLoggedOut()
+    } catch {
+      // Proceed with local logout even if network or session is already expired
     }
+    try {
+      await clearSnapshot()
+    } catch {
+      // Ignore IndexedDB unavailability (e.g. private browsing)
+    }
+    onLoggedOut()
+    navigate('/login', { replace: true })
   }
 
   return (
@@ -91,7 +102,13 @@ function ShellContent({
         <div className="sidebar__account">
           <CircleUserRound aria-hidden="true" />
           <span><strong>{user.displayName}</strong><small>@{user.username}</small></span>
-          <button className="icon-button" onClick={logout} aria-label="Keluar dari aplikasi">
+          <button
+            type="button"
+            className="icon-button"
+            onClick={() => void logout()}
+            disabled={loggingOut}
+            aria-label="Keluar dari aplikasi"
+          >
             <LogOut aria-hidden="true" />
           </button>
         </div>

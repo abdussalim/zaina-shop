@@ -59,10 +59,19 @@ authRoutes.post('/login', async (c) => {
 })
 
 authRoutes.post('/logout', async (c) => {
-  deleteCookie(c, 'zaina_session', { path: '/' })
+  const cookieOptions = {
+    path: '/',
+    httpOnly: true,
+    sameSite: 'Lax' as const,
+    secure: true,
+  }
+  deleteCookie(c, 'zaina_session', cookieOptions)
+  deleteCookie(c, 'zaina.sid', cookieOptions)
+  c.header('Cache-Control', 'no-store')
   return c.body(null, 204)
 })
 
 authRoutes.get('/session', requireAuth, (c) => {
+  c.header('Cache-Control', 'no-store')
   return sendData(c, c.get('user'))
 })

@@ -54,9 +54,18 @@ function RoutedApp() {
     window.addEventListener(SESSION_EXPIRED_EVENT, requireReauthentication)
     return () => window.removeEventListener(SESSION_EXPIRED_EVENT, requireReauthentication)
   }, [])
-  const session = useQuery({
+  const session = useQuery<AuthenticatedUser | null>({
     queryKey: ['session'],
-    queryFn: () => apiRequest<AuthenticatedUser>('/api/v1/auth/session'),
+    queryFn: async () => {
+      try {
+        return await apiRequest<AuthenticatedUser>('/api/v1/auth/session')
+      } catch (error) {
+        if (error instanceof ApiClientError && error.status === 401) {
+          return null
+        }
+        throw error
+      }
+    },
     retry: (count, error) => !(error instanceof ApiClientError && error.status === 401) && count < 1,
   })
   const storeSettings = useQuery({
@@ -104,7 +113,15 @@ function RoutedApp() {
             <AppShell
               user={session.data}
               storeSettings={storeSettings.data ?? defaultStoreSettings}
-              onLoggedOut={() => cache.setQueryData(['session'], undefined)}
+              onLoggedOut={() => {
+                void cache.cancelQueries({ queryKey: ['session'] })
+                cache.setQueryData(['session'], null)
+                cache.removeQueries({
+                  predicate: (query) =>
+                    query.queryKey[0] !== 'session' && query.queryKey[0] !== 'storefront',
+                })
+                setReauthRequired(false)
+              }}
             />
           }
         >

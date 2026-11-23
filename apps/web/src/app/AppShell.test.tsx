@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -39,5 +39,42 @@ describe('AppShell', () => {
 
     expect(screen.getAllByText('Rumah Bening')).toHaveLength(2)
     expect(screen.getByText('Isi halaman')).toBeInTheDocument()
+  })
+
+  it('still completes logout cleanly even if logout request fails', async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockRejectedValueOnce(new Error('Network offline'))
+    const onLoggedOut = vi.fn()
+    const queryClient = new QueryClient()
+
+    try {
+      render(
+        <QueryClientProvider client={queryClient}>
+          <MemoryRouter initialEntries={['/dashboard']}>
+            <Routes>
+              <Route
+                element={
+                  <AppShell
+                    user={{ id: 'user-1', username: 'owner', displayName: 'Pemilik' }}
+                    storeSettings={customStore}
+                    onLoggedOut={onLoggedOut}
+                  />
+                }
+              >
+                <Route path="/dashboard" element={<div>Dashboard</div>} />
+              </Route>
+              <Route path="/login" element={<div>Halaman Login</div>} />
+            </Routes>
+          </MemoryRouter>
+        </QueryClientProvider>,
+      )
+
+      fireEvent.click(screen.getByRole('button', { name: 'Keluar dari aplikasi' }))
+      await waitFor(() => expect(onLoggedOut).toHaveBeenCalledTimes(1))
+      expect(await screen.findByText('Halaman Login')).toBeInTheDocument()
+    } finally {
+      fetchSpy.mockRestore()
+    }
   })
 })

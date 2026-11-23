@@ -1258,6 +1258,10 @@ input[type='number'] {
     text-transform: uppercase;
   }
 
+  .pwa-prompt.pwa-prompt--inline {
+    display: none;
+  }
+
   .pwa-prompt:not(.pwa-prompt--inline) {
     top: auto;
     right: auto;
