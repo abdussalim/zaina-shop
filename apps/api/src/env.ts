@@ -11,6 +11,7 @@ export interface Env {
     DB: D1Database
     IMAGES?: R2Bucket
     SESSION_SECRET?: string
+    MONITOR_AGENT_KEY?: string
     ASSETS?: Fetcher
   }
   Variables: {

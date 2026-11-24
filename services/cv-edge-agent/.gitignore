@@ -1,0 +1,16 @@
+# Secrets & local environment
+.env
+.env.*
+!.env.example
+
+# Large OpenVINO model binaries (download/place locally, do not commit)
+models/
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+*.log

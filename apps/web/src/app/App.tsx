@@ -38,6 +38,9 @@ const ReportsPage = lazy(() =>
 const SettingsPage = lazy(() =>
   import('../features/settings/SettingsPage.js').then((module) => ({ default: module.SettingsPage })),
 )
+const MonitorPage = lazy(() =>
+  import('../features/monitor/MonitorPage.js').then((module) => ({ default: module.MonitorPage })),
+)
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -133,6 +136,7 @@ function RoutedApp() {
           <Route path="sales/:id" element={<OfflineBoundary allowOffline={false}><SaleReceipt /></OfflineBoundary>} />
           <Route path="inventory" element={<OfflineBoundary allowOffline><InventoryPage /></OfflineBoundary>} />
           <Route path="reports" element={<OfflineBoundary allowOffline={false}><ReportsPage /></OfflineBoundary>} />
+          <Route path="monitor" element={<OfflineBoundary allowOffline={false}><MonitorPage /></OfflineBoundary>} />
           <Route path="settings" element={<OfflineBoundary allowOffline={false}><SettingsPage /></OfflineBoundary>} />
         </Route>
         <Route path="/login" element={<Navigate to="/dashboard" replace />} />

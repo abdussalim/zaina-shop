@@ -1705,6 +1705,459 @@
   background: color-mix(in srgb, var(--brand-soft) 72%, var(--brand) 12%);
 }
 
+/* Monitor / Pantau Toko & CCTV */
+.monitor-door-toggle {
+  min-height: var(--tap-size);
+  font-weight: 650;
+}
+
+.monitor-door-toggle--open {
+  background: var(--success);
+  border-color: var(--success);
+  color: #ffffff;
+}
+
+.monitor-door-toggle--open:hover:not(:disabled) {
+  background: var(--brand-dark);
+  border-color: var(--brand-dark);
+}
+
+.monitor-door-toggle--closed {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #ffffff;
+}
+
+.monitor-metric-card {
+  touch-action: pan-y;
+}
+
+.monitor-metric-card__badge-row {
+  display: flex;
+  align-items: center;
+  min-height: 1.9rem;
+}
+
+.monitor-cameras {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+.monitor-camera-card {
+  touch-action: pan-y;
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.monitor-camera-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.monitor-camera-card__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.monitor-camera-card__title h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+.monitor-camera-card__title small {
+  display: block;
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+}
+
+.monitor-camera-card__icon {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  background: var(--brand-soft);
+  color: var(--brand-dark);
+}
+
+.monitor-camera-card__controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.monitor-switch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--tap-size);
+  min-height: var(--tap-size);
+  padding: 0.35rem;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  cursor: pointer;
+}
+
+.monitor-switch:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.monitor-switch__track {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 3rem;
+  height: 1.75rem;
+  padding: 0.1875rem;
+  border-radius: var(--radius-pill);
+  background: var(--line-strong);
+  transition: background-color 180ms ease;
+}
+
+.monitor-switch--on .monitor-switch__track {
+  background: var(--brand);
+}
+
+.monitor-switch__thumb {
+  width: 1.375rem;
+  height: 1.375rem;
+  border-radius: 50%;
+  background: var(--surface-elevated);
+  box-shadow: 0 1px 3px rgb(22 26 23 / 0.24);
+  transform: translateX(0);
+  transition: transform 180ms ease;
+}
+
+.monitor-switch--on .monitor-switch__thumb {
+  transform: translateX(1.25rem);
+}
+
+.monitor-feed-stage {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-subtle);
+  display: grid;
+  place-items: center;
+}
+
+.monitor-feed-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.monitor-feed-img--hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.monitor-live-badge {
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-3);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.65rem;
+  border-radius: var(--radius-pill);
+  background: rgb(22 26 23 / 0.72);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  backdrop-filter: blur(4px);
+}
+
+.monitor-live-badge svg {
+  width: 0.85rem;
+  height: 0.85rem;
+  color: #6ee7b7;
+}
+
+.monitor-feed-fallback {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  text-align: center;
+  color: var(--ink-soft);
+}
+
+.monitor-feed-fallback svg {
+  width: 1.75rem;
+  height: 1.75rem;
+  color: var(--ink-muted);
+}
+
+.monitor-feed-fallback strong {
+  color: var(--ink);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.monitor-feed-fallback small {
+  max-width: 24ch;
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.monitor-panels-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+.monitor-panel {
+  touch-action: pan-y;
+}
+
+.monitor-mode-control {
+  flex-wrap: wrap;
+}
+
+.monitor-mode-control button {
+  min-width: 9rem;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.25;
+  padding-block: var(--space-2);
+}
+
+.monitor-audio-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+  align-items: end;
+}
+
+.monitor-mute-wrap {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.monitor-mute-wrap__label {
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.monitor-mute-wrap .button {
+  width: 100%;
+  min-height: var(--tap-size);
+}
+
+.monitor-meters {
+  display: grid;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.monitor-meter {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.monitor-meter__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: 0.84rem;
+}
+
+.monitor-meter__head span {
+  color: var(--ink-soft);
+  font-weight: 550;
+}
+
+.monitor-meter__head strong {
+  color: var(--ink);
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums lining-nums;
+  font-weight: 650;
+}
+
+.monitor-meter__track {
+  width: 100%;
+  height: 0.55rem;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--surface-subtle);
+}
+
+.monitor-meter__fill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--brand);
+  transition: width 260ms ease, background-color 200ms ease;
+}
+
+.monitor-meter__fill--warn {
+  background: var(--warning);
+}
+
+.monitor-meter__fill--danger {
+  background: var(--danger);
+}
+
+.monitor-specs-block {
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-base);
+}
+
+.monitor-specs-block__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  color: var(--brand-dark);
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.monitor-specs-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.monitor-specs-grid dt {
+  color: var(--ink-soft);
+  font-size: 0.74rem;
+  margin-bottom: 0.15rem;
+}
+
+.monitor-specs-grid dd {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.85rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.monitor-specs-hint {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.84rem;
+}
+
+.monitor-tunnel-form__row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-2);
+}
+
+.monitor-tunnel-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.monitor-tunnel-input-wrap svg {
+  position: absolute;
+  left: 0.85rem;
+  color: var(--ink-muted);
+  pointer-events: none;
+}
+
+.monitor-tunnel-input-wrap input {
+  width: 100%;
+  min-height: var(--tap-size);
+  padding-left: 2.5rem;
+}
+
+.monitor-tunnel-form__row .button {
+  min-height: var(--tap-size);
+}
+
+.monitor-events-panel {
+  touch-action: pan-y;
+}
+
+.monitor-event-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.monitor-event-item {
+  touch-action: pan-y;
+  display: grid;
+  gap: var(--space-2);
+  padding-block: var(--space-3);
+  border-top: 1px solid var(--line);
+}
+
+.monitor-event-item:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.monitor-event-item__main {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.monitor-event-item__main p {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.88rem;
+}
+
+.monitor-event-item__badges {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.monitor-event-item__cam {
+  color: var(--ink-soft);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.monitor-event-item__time {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.monitor-event-item__time svg {
+  width: 0.9rem;
+  height: 0.9rem;
+  color: var(--ink-muted);
+}
+
 /* Progressive Mobile-First Breakpoints */
 @media (min-width: 481px) {
   .metric-rail,
@@ -1804,6 +2257,28 @@
   .offline-product-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .monitor-specs-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .monitor-audio-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .monitor-mute-wrap .button {
+    width: auto;
+  }
+
+  .monitor-tunnel-form__row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .monitor-event-item {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--space-4);
+  }
 }
 
 @media (min-width: 769px) {
@@ -1835,7 +2310,9 @@
   .dashboard-grid--activity,
   .report-grid,
   .settings-grid,
-  .detail-grid {
+  .detail-grid,
+  .monitor-cameras,
+  .monitor-panels-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -1994,6 +2471,11 @@
   .dashboard-grid--activity,
   .report-grid {
     gap: var(--space-8);
+  }
+
+  .monitor-cameras,
+  .monitor-panels-grid {
+    gap: var(--space-5);
   }
 
   .shelf-section,

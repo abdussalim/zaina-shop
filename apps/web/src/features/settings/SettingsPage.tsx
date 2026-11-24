@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { BarChart3, ChevronRight, CircleUserRound, KeyRound, LogOut, MapPin, Save, ShieldCheck, Store } from 'lucide-react'
+import { BarChart3, Camera, ChevronRight, CircleUserRound, KeyRound, LogOut, MapPin, Save, ShieldCheck, Store } from 'lucide-react'
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useOutletContext } from 'react-router-dom'
@@ -60,6 +60,17 @@ export function SettingsPage() {
               </Button>
             ) : null}
           </div>
+
+          <Link to="/monitor" className="mobile-nav-card">
+            <div className="mobile-nav-card__content">
+              <span className="mobile-nav-card__icon"><Camera size={20} /></span>
+              <div>
+                <strong>Pantau Toko &amp; CCTV</strong>
+                <small>Kamera langsung, kontrol pintu, dan pengunjung hari ini</small>
+              </div>
+            </div>
+            <ChevronRight size={18} className="mobile-nav-card__arrow" />
+          </Link>
 
           <Link to="/reports" className="mobile-nav-card">
             <div className="mobile-nav-card__content">

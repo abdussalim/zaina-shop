@@ -1,6 +1,7 @@
 export * from './domain.js'
 export * from './schemas.js'
 export * from './whatsapp.js'
+export * from './monitor.js'
 
 export interface ApiSuccess<T> {
   data: T

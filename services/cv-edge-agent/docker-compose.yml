@@ -1,0 +1,26 @@
+services:
+  cv-edge-agent:
+    build: .
+    container_name: zaina-cv-edge-agent
+    env_file:
+      - .env
+    ports:
+      - "${MJPEG_PORT:-8090}:8090"
+    volumes:
+      - ./models:/app/models:ro
+    # Pada PC Intel Linux, buka komentar baris di bawah agar OpenVINO GPU & intel_gpu_top aktif:
+    # devices:
+    #   - /dev/dri:/dev/dri
+    restart: unless-stopped
+
+  # Opsional: Cloudflare Tunnel gratis untuk expose live MJPEG (port 8090) ke HTTPS publik.
+  # Isi CLOUDFLARE_TUNNEL_TOKEN di .env lalu hapus tanda komentar blok di bawah.
+  # cloudflared:
+  #   image: cloudflare/cloudflared:latest
+  #   container_name: zaina-cv-cloudflared
+  #   command: tunnel --no-autoupdate run
+  #   environment:
+  #     - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+  #   depends_on:
+  #     - cv-edge-agent
+  #   restart: unless-stopped

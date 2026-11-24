@@ -13,6 +13,7 @@ import { inventoryRoutes } from './routes/inventory.js'
 import { salesRoutes } from './routes/sales.js'
 import { reportsRoutes } from './routes/reports.js'
 import { settingsRoutes } from './routes/settings.js'
+import { monitorRoutes } from './routes/monitor.js'
 
 const app = new Hono<Env>()
 
@@ -37,6 +38,7 @@ app.route('/api/v1/storefront', storefrontRoutes)
 app.route('/api/v1/auth', authRoutes)
 app.route('/api/v1/upload', uploadRoutes)
 app.route('/api/v1/images', imagesRoutes)
+app.route('/api/v1/monitor', monitorRoutes)
 app.route('/api/v1', catalogRoutes)
 app.route('/api/v1', inventoryRoutes)
 app.route('/api/v1', salesRoutes)

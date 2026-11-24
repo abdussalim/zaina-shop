@@ -1,0 +1,7 @@
+numpy
+opencv-python-headless
+openvino
+scipy
+psutil
+requests
+python-dotenv

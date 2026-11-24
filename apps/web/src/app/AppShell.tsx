@@ -1,5 +1,6 @@
 import {
   Boxes,
+  Camera,
   CircleUserRound,
   LayoutDashboard,
   LogOut,
@@ -28,6 +29,7 @@ const navigation = [
   { to: '/sales/new', label: 'Jual', icon: ShoppingBasket, featured: true },
   { to: '/inventory', label: 'Stok', icon: Boxes },
   { to: '/reports', label: 'Laporan', icon: BarChart3, desktopOnly: true },
+  { to: '/monitor', label: 'Pantau', icon: Camera, desktopOnly: true },
   { to: '/settings', label: 'Pengaturan', mobileLabel: 'Lainnya', icon: MoreHorizontal },
 ]
 
